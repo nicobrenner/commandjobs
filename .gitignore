@@ -161,3 +161,7 @@ cython_debug/
 
 # Mac files
 .AppleDouble/
+.DS_Store
+
+# Vim files
+*.swp
