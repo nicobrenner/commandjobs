@@ -9,7 +9,7 @@ Use Command Jobs to streamline your job search and quickly find listings that ar
 
 ## Features
 
-- View and navigate matched job listings directly from the terminal
+- View and navigate AI-matched job listings directly from the terminal
     !["AI job matches"](commandjobs-ai-matches.png)
 
 - Scrape job listings from "Ask HN: Who's hiring?" posts on Hacker News
@@ -48,7 +48,7 @@ Then, get some job listings into the app by running Scrape "Ask HN: Who's hiring
 
 For the next step, make sure you've reviewed your `.env` file and have adapted the prompts to your preferences for job matching
 
-Once you have your Resume ready, jobs in the local db and the prompts configured, run Find best matches for resume with AI. That will run through the listings to find a match of your resume and job preferences
+Once you have your Resume ready, jobs in the local db and the prompts configured, run Find best matches for resume with AI. That will run through the listings to find a match of your resume and job preferences (for now, it is limited at 5 checks per run, you can modify that through changing the `LIMIT` in the query within `fetch_job_listings()` in `src/database_manager.py`)
 
 When the GPT analysis is done, you get access to the AI found X listings match your resume option, where you can navigate the best matches found
 
