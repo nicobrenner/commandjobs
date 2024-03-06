@@ -42,7 +42,7 @@ After going through the Configuration and successfully running Command Jobs
 
 You will get a menu with the options below. To navigate the menu, just use the arrow keys and select options with Enter. You can quit at any time by pressing `q`
 
-When first running the app, open the Edit Resume section and paste the text of your resume, no need to include your name or contact info
+When first running the app, open the Edit Resume section and paste the text of your resume, no need to include your name or contact info (you can see an example resume on `base_resume.sample`)
 
 Then, get some job listings into the app by running Scrape "Ask HN: Who's hiring?". You can see the first few listings in the Navigate jobs in the local db section (if you want to see more, you can also open `job_listings.db` directly with sqlite3 and check out the contents)
 
