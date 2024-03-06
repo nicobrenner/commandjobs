@@ -1,0 +1,25 @@
+#
+# Docker compose file running Flask app in development (debug) mode
+# https://docs.docker.com/compose/compose-file/
+#
+version: "3.7"
+services:
+  app:
+    build: .
+    
+    # Set container name
+    container_name: commandjobs
+
+    # Set environment variables
+    environment:
+      - MENU_APP=/repo/src/menu.py
+
+    # Mount entire project into docker container under /repo
+    volumes:
+      - ./:/repo
+      - ./docker-entrypoint.sh:/repo/docker-entrypoint.sh
+
+    network_mode: host
+
+    tty: true  # Allocate a pseudo-TTY
+    stdin_open: true  # Keep STDIN open
