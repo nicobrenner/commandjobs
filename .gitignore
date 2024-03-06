@@ -165,3 +165,7 @@ cython_debug/
 
 # Vim files
 *.swp
+
+# Ignore user-generated files
+base_resume.txt
+job_listings.db
