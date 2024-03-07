@@ -18,6 +18,26 @@ class MenuApp:
     def __init__(self, stdscr, logger):
         # Load environment variables
         load_dotenv()
+        required_values = (
+            "OPENAI_API_KEY",
+            "OPENAI_GPT_MODEL",
+            "BASE_RESUME_PATH",
+            "DB_PATH",
+            "HN_START_URL",
+        )
+        for required_value in required_values:
+            if not os.getenv(required_value):
+                print(
+                    "Failed to initialize the application. The following values are required to be "
+                    "set in a .env file:",
+                    *required_values,
+                    sep="\n",
+                )
+                print(
+                    "If you don't have an OpenAI key, visit openai.com to obtain one."
+                )
+                print("See README.md for more configuration options.")
+                raise ValueError(f"{required_value} is not set; exiting.")
 
         self.scraping_done_event = threading.Event()  # Event to signal scraping completion
         self.logger = logger
