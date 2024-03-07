@@ -11,13 +11,13 @@ CTO/Co-founder	AutopilotReviews	San Francisco / Los Angeles	10/2014 - Present
 ·	Drove the development of multiple backend integrations using Python and Selenium
 
 Founding Engineer	Padlet (YC W13)	San Francisco	09/2013 - 09/2014
-·	Instrumental in scaling the infrastructure of a Ruby on Rails/PostgreSQL + Angular + Node/Redis stack to support over 1 million registered users and 5,00
+·	Instrumental in scaling the infrastructure of a Ruby on Rails/PostgreSQL + Angular + Node/Redis stack to support over 1 million registered users and 5,000 concurrent connections
 ·	Played a key role in enhancing team capabilities through strategic recruitment and fostering a collaborative environment
 ·	Optimized Postgres performance for high-speed data processing and management, directly contributing to the platform's scalability and efficiency
 ·	Built and deployed in-house sensitive media detector, which was fundamental to Padlet’s capacity to grow
 
 CTO/Co-founder	ClickFono	Santiago, Chile	03/2008 - 08/2013
-·	Led the architectural design and server infrastructure setup, incorporating SIP/voice integrations with telecom providers to create the most advanced onl
+·	Led the architectural design and server infrastructure setup, incorporating SIP/voice integrations with telecom providers to create the most advanced online SaaS phone platform in Latin America at the time
 ·	Built a REST API for voice applications, using Ruby on Rails/PostgreSQL
 ·	Typical clients were top brands in Insurance, Banking, Finance, Retail, Telecommunications
 
@@ -33,11 +33,3 @@ PUC, Chile 2000-2006
 Double major CS and IEOR engineering degree
 
 Supervised Machine Learning, by Andrew Ng - Coursera 2017
-
-
-
-
-
-
-
-
