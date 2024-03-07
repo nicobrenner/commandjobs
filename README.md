@@ -76,7 +76,9 @@ To exit the application, press `q`
 
 1. Build the Docker image:
 
-    `docker-compose up build app`
+    `docker-compose up app`
+
+    This will build the image and then error out when running, that's ok
 
 2. Run the Docker container (make sure you've setup your OpenAI API key in your `.env` file - see Configuration section below):
 
@@ -103,7 +105,7 @@ To exit the application, press `q`
 
 4. Run the application:
 
-    `python3 main.py`
+    `python3 src/main.py`
 
 
 
