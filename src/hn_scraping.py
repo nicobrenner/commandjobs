@@ -13,31 +13,7 @@ class HNScraper:
         self.db_path = db_path
         # Define the base URL for Ask HN: Who's hiring
         self.base_url = 'https://news.ycombinator.com/item?id=39562986&p=1'
-        self.create_database()
         self.new_entries_count = 0  # Initialize counter for new entries
-
-    def create_database(self):
-        """Create or modify the SQLite database for storing job listings."""
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        # Create a new table with the required schema
-        c.execute('''CREATE TABLE IF NOT EXISTS new_job_listings
-                    (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    original_text TEXT,
-                    original_html TEXT,
-                    source TEXT,
-                    external_id TEXT UNIQUE)''')
-        # Check if the old table exists and if it has the 'external_id' column
-        c.execute("PRAGMA table_info(job_listings)")
-        columns = [row[1] for row in c.fetchall()]
-        if 'external_id' not in columns:
-            # If the 'external_id' column does not exist, transfer data to new table
-            c.execute("INSERT INTO new_job_listings (original_text, original_html, source) SELECT original_text, original_html, source FROM job_listings")
-            # Drop the old table and rename the new one
-            c.execute("DROP TABLE job_listings")
-            c.execute("ALTER TABLE new_job_listings RENAME TO job_listings")
-        conn.commit()
-        conn.close()
 
     def save_to_database(self, original_text, original_html, source, external_id):
         """Save a job listing to the SQLite database."""
