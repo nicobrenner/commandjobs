@@ -6,6 +6,10 @@ Command Jobs is a terminal-based job finder and application tracker for software
 
 Use Command Jobs to streamline your job search and quickly find listings that are the best fit for your skills, experience and preferences
 
+## Update
+
+Thank you to the Hacker News community for the encouragement, enthusiasm and support. Check out this thread: [Show HN: Tech jobs on the command line](https://news.ycombinator.com/item?id=39621373)
+
 
 ## Features
 
@@ -42,7 +46,7 @@ After going through the Configuration and successfully running Command Jobs
 
 You will get a menu with the options below. To navigate the menu, just use the arrow keys and select options with Enter. You can quit at any time by pressing `q`
 
-When first running the app, open the Edit Resume section and paste the text of your resume, no need to include your name or contact info (you can see an example resume on `base_resume.sample`)
+When first running the app, open the Edit Resume section and paste the text of your resume, no need to include your name or contact info (you can see an example resume on `base_resume.sample`. Note: there's currently a minor bug when pasting a resume text, it's more reliable to paste the resume text directly into the `base_resume.txt` file, see issue #12)
 
 Then, get some job listings into the app by running Scrape "Ask HN: Who's hiring?". You can see the first few listings in the Navigate jobs in the local db section (if you want to see more, you can also open `job_listings.db` directly with sqlite3 and check out the contents)
 
@@ -105,7 +109,7 @@ To exit the application, press `q`
 
 4. Run the application:
 
-    `python3 src/main.py`
+    `python3 src/menu.py`
 
 
 
