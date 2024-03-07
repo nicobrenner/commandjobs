@@ -22,6 +22,12 @@ class MenuApp:
         self.scraping_done_event = threading.Event()  # Event to signal scraping completion
         self.logger = logger
         self.db_path = os.getenv('DB_PATH')
+        if self.db_path is None:
+            # I don't like raising an exception here, but haven't been able to
+            # push out an error message using print() before closing
+            # the program with sys.exit(1) (at least with docker, there's no output)
+            raise ValueError("DB_PATH variable is not set. Please configure your .env file")
+        
         self.db_manager = DatabaseManager(self.db_path)  # Specify the path
         self.gpt_processor = GPTProcessor(self.db_manager, os.getenv('OPENAI_API_KEY'))
         self.resume_path = os.getenv('BASE_RESUME_PATH')
