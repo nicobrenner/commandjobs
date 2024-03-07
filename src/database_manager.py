@@ -9,12 +9,22 @@ class DatabaseManager:
 
     def initialize_db(self):
         self.cursor.execute('''
-        CREATE TABLE IF NOT EXISTS gpt_interactions (
-            id INTEGER PRIMARY KEY,
-            job_id INTEGER,
-            prompt TEXT,
-            answer TEXT
-        )
+            CREATE TABLE IF NOT EXISTS job_listings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                original_text TEXT,
+                original_html TEXT,
+                source TEXT,
+                external_id TEXT UNIQUE
+            )
+        ''')
+        self.conn.commit()
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gpt_interactions (
+                id INTEGER PRIMARY KEY,
+                job_id INTEGER,
+                prompt TEXT,
+                answer TEXT
+            )
         ''')
         self.conn.commit()
 
