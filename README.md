@@ -1,14 +1,33 @@
-# Command Jobs
+# > Command Jobs 👨🏻‍💻
 
-Command Jobs is a terminal-based job finder and application tracker for software engineers
+Command Jobs uses AI to help software engineers find the best jobs
 
-!["Command Jobs main menu"](commandjobs-main-menu.png)
+![Command Jobs running via Docker](commandjobs-capture-optimized.gif)
 
-Use Command Jobs to streamline your job search and quickly find listings that are the best fit for your skills, experience and preferences
+Using AI, Command Jobs makes sure to find only the absolute best matches for your experience, skills and job preferences
+
+Stop wasting your time with online tools that are not built for you, the candidate
+
+Command Jobs is the only job searching tool that runs from where you work, the terminal. And yes, it also doesn't make you read through hundreds of job listings just to find a couple of good matches
+
+This is just starting out! Follow along as we improve it
+
+
+🙏🏼🤗❤️
+
+
+Note: If you want to add another source of job listings, [go to this issue](https://github.com/nicobrenner/commandjobs/issues/23) and add it as a suggested source
+
 
 ## Updates
 
 * Building in public:
+    * Finally was able to close out [#12](https://github.com/nicobrenner/commandjobs/issues/12) follow along as I resolve it in the video below
+
+        * [![name](https://cdn.loom.com/sessions/thumbnails/9ff310f1a7534b2793b3ed366e9859ac-with-play.gif)](https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac)
+
+        https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac
+
     * Decided to try to build this project as openly as possible, in that spirit, I just recorded a coding session in which I go through the process of trying to resolve a bug (issue #12), and finding 3 other bugs instead!
 
         If you are just getting started with coding, it's also a pretty good overview of a basic software project management. In the video I show the whole workflow of not only writing code, but also managing an environment, dealing with errors, documenting the process in Github, managing git and branches, commiting, pushing and merging code, updating documentation (like now), and sharing/promoting
@@ -47,7 +66,7 @@ Use Command Jobs to streamline your job search and quickly find listings that ar
 
 ## Usage
 
-![Command Jobs running via Docker](commandjobs-capture-optimized.gif)
+!["Command Jobs main menu"](commandjobs-main-menu.png)
 
 After going through the Configuration and successfully running Command Jobs
 
