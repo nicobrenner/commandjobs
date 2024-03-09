@@ -14,9 +14,9 @@ def fetch_data(db_path):
     except (sqlite3.OperationalError, sqlite3.DatabaseError):
         return None
 
-def draw_table(stdscr):
+def draw_table(stdscr, db_path):
     curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLUE)  # Highlight color
-    data = fetch_data('/repo/job_listings.db')
+    data = fetch_data(db_path)
     max_y, max_x = stdscr.getmaxyx()
     max_table_width = min(120, max_x - 4)  # Adjusted for padding and separators
     text_col_width = 78  # Adjusted for spacing between cells
