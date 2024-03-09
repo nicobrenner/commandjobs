@@ -6,9 +6,16 @@ Command Jobs is a terminal-based job finder and application tracker for software
 
 Use Command Jobs to streamline your job search and quickly find listings that are the best fit for your skills, experience and preferences
 
-## Update
+## Updates
 
-Thank you to the Hacker News community for the encouragement, enthusiasm and support. Check out this thread: [Show HN: Tech jobs on the command line](https://news.ycombinator.com/item?id=39621373)
+* Building in public:
+    * Decided to try to build this project as openly as possible, in that spirit, I just recorded a coding session in which I go through the process of trying to resolve a bug (issue #12), and finding 3 other bugs instead!
+
+        If you are just getting started with coding, it's also a pretty good overview of a basic software project management. In the video I show the whole workflow of not only writing code, but also managing an environment, dealing with errors, documenting the process in Github, managing git and branches, commiting, pushing and merging code, updating documentation (like now), and sharing/promoting
+
+    * [![name](https://cdn.loom.com/sessions/thumbnails/82196bfcbf0a41d58885c5b3ddc69492-with-play.gif)](https://www.loom.com/share/82196bfcbf0a41d58885c5b3ddc69492)
+
+* Thank you to the Hacker News community for the encouragement, enthusiasm and support. Check out this thread: [Show HN: Tech jobs on the command line](https://news.ycombinator.com/item?id=39621373)
 
 
 ## Features
@@ -68,7 +75,8 @@ The menu includes:
 To exit the application, press `q`
 
 
-## How to Run the Application
+## Quick Start
+
 
 * Clone the repository:
 
@@ -76,40 +84,40 @@ To exit the application, press `q`
     - `cd commandjobs`
 
 
-### Running via Docker
+* Run via Docker
 
-1. Build the Docker image:
+    1. Build the Docker image:
 
-    `docker-compose up app`
+        - `docker-compose up app`
 
-    This will build the image and then error out when running, that's ok
+        This will build the image and then error out when running, that's ok
 
-2. Run the Docker container (make sure you've setup your OpenAI API key in your `.env` file - see Configuration section below):
+    2. Run the Docker container (make sure you've setup your OpenAI API key in your `.env` file - see Configuration section below):
 
-    `docker-compose run app`
+        - `docker-compose run app`
 
-3. Alternatively, you can make `commandjobs.sh` executable and run it:
+    3. Alternatively, you can make `commandjobs.sh` executable and run it:
 
-    - `chmod +x commandjobs.sh`
-    - `./commandjobs.sh`
-
-
-
-### Running Directly via Python in a Virtual Environment
+        - `chmod +x commandjobs.sh`
+        - `./commandjobs.sh`
 
 
-2. Set up a Python virtual environment and activate it:
 
-    `python3 -m venv venv`
-    `source venv/bin/activate`
+### Running Directly via Python in a Virtual Environment (if you don't want to use Docker)
 
-3. Install the dependencies:
 
-    `pip3 install -r requirements.txt`
+1. Set up a Python virtual environment and activate it:
 
-4. Run the application:
+    - `python3 -m venv venv`
+    - `source venv/bin/activate`
 
-    `python3 src/menu.py`
+2. Install the dependencies:
+
+    - `pip3 install -r requirements.txt`
+
+3. Run the application:
+
+    - `python3 src/menu.py`
 
 
 
