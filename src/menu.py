@@ -242,7 +242,7 @@ class MenuApp:
                 if offset > 0:
                     offset -= 1
             elif key in [ord('r'), ord('R')]:
-                lines = self.capture_text_with_scrolling("Replace resume. Type END then Enter to finish:")
+                lines = self.capture_text_with_scrolling()
                 with open(resume_path, 'w') as file:
                     file.writelines(lines)
                 break
@@ -268,7 +268,7 @@ class MenuApp:
             self.display_text_with_scrolling(header, lines, resume_path)
         else:
             # Adjust the prompt position in capture_text_with_scrolling if needed
-            input_lines = self.capture_text_with_scrolling("Enter/Paste your resume. Type 'END' to finish:")
+            input_lines = self.capture_text_with_scrolling()
             with open(resume_path, 'w') as file:
                 file.writelines(input_lines)
             stdscr.clear()
@@ -339,40 +339,61 @@ class MenuApp:
             self.stdscr.addstr(3, 0, f"Source: {source_text}")
         self.stdscr.refresh()
 
-    def capture_text_with_scrolling(self, prompt):
-        curses.echo()  # Enable echoing of keys to the screen
-        self.stdscr.clear()
+    # Despite the name of the method, this currently
+    # is not handling scrolling 😅
+    
+    # It directs the user to paste text into the terminal
+    # When Esc is pressed, captures the input and returns it 
+    def capture_text_with_scrolling(self):
+        directions = "Paste your resume text, then Press the 'Esc' key to finish and save"
+        curses.curs_set(1)  # Show cursor
+        self.stdscr.keypad(True)  # Enable keypad mode
+        curses.noecho()      # Don't echo keypresses
+        curses.raw()         # Raw mode - get all inputs
+        self.stdscr.clear()       # Clear the screen
+        self.stdscr.scrollok(True)  # Enable scrolling in the window
+        
+        text = []
+        y, x = 0, 0  # Initial position
         max_y, max_x = self.stdscr.getmaxyx()
-        self.stdscr.addstr(0, 0, prompt)
-        input_lines = []
-        line_num = 1
         
+        # This loop "listens" for keyboard input
         while True:
-            # Ensure the prompt and any overflow text are visible
-            self.stdscr.clear()
-            self.stdscr.addstr(0, 0, prompt)
-            for i, display_line in enumerate(input_lines[max(0, len(input_lines) - (max_y - 3)):]):  # Adjust for prompt and instruction line
-                self.stdscr.addstr(i + 1, 0, display_line.strip())
-            
-            if line_num >= max_y - 2:  # Leave space for instruction line
-                # Inform the user how to finish input when at the bottom of the screen
-                self.stdscr.addstr(max_y - 1, 0, "Screen limit reached. Type 'END' and press Enter to finish.", curses.A_REVERSE)
-            self.stdscr.refresh()
-            
-            # Move cursor for next input line or keep it at the bottom
-            next_line_num = min(line_num, max_y - 3)
-            self.stdscr.move(next_line_num + 1, 0)
-            
-            # Capture input
-            line = self.stdscr.getstr(next_line_num + 1, 0, max_x - 1).decode('utf-8')
-            if line.strip().lower() == "end":  # Check for "END" signal to finish
-                break
-            
-            input_lines.append(line + '\n')  # Add new line to input
-            line_num += 1
+            self.stdscr.addstr(0, 0, directions, curses.A_REVERSE)
+            try:
+                char = self.stdscr.get_wch()  # Get character or key press
+            except AttributeError:
+                # To be able to handle utf8, we need ncurses to have
+                # the stdscr.get_wch() method available
+                self.stdscr.addstr(0, 0, "Error, app needs stdscr.get_wch() method", curses.A_REVERSE)
+                
+                return ''
         
-        self.stdscr.clear()
-        return input_lines[:-1] if input_lines and input_lines[-1].strip().lower() == "end" else input_lines
+            if char == '\x1b':  # Escape key pressed
+                break
+            elif char == '\n':  # Handle newline
+                text.append('\n')
+                y += 1
+                x = 0
+                if y >= max_y - 1:
+                    self.stdscr.scroll(1)
+                    y -= 1
+            elif isinstance(char, str):  # Regular character input
+                if x >= max_x - 1:  # Move to next line if at the end
+                    y += 1
+                    x = 0
+                    if y >= max_y - 1:
+                        self.stdscr.scroll(1)
+                        y -= 1
+                text.append(char)
+                try:
+                    self.stdscr.addstr(y, x, char)
+                except curses.error:
+                    pass  # Ignore errors potentially caused by edge cases in window size
+                x += 1
+            self.stdscr.refresh()
+
+        return ''.join(text)
 
 # Ensure logging is configured to write to a file or standard output
 logging.basicConfig(filename='application.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(message)s')
