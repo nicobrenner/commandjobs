@@ -201,11 +201,13 @@ class MenuApp:
         self.draw_menu()
 
 
+    # Menu options, the number map to the self.menu_items array
+    # eg. first option (0): self.menu_items[0] = resume_menu 
+    # = "Create or replace base resume"
     def execute_menu_action(self):
         if self.current_row == 0:  # Create or replace base resume
             self.manage_resume(self.stdscr)
         elif self.current_row == 1:  # Scrape "Ask HN: Who's hiring?"
-            # self.run_scraper_with_ui()
             self.start_scraping_with_status_updates()
         elif self.current_row == 2:  # Navigate jobs in local db
             draw_table(self.stdscr)
@@ -309,26 +311,6 @@ class MenuApp:
         self.stdscr.refresh()  # Refresh the screen to show the updated menu
         self.stdscr.getch()  # Wait for any key press after completion
         self.scraping_done_event.clear()  # Clear the event for the next scraping operation
-
-    def run_scraper_with_ui(self):
-        # Assuming HNScraper is initialized in __init__ or somewhere relevant
-        self.scraper = HNScraper(self.db_path)  # Initialize the scraper
-        # This is the URL being used
-        start_url = os.getenv('HN_START_URL')  # Starting URL
-        
-        # Lambda function for updating UI with scraping progress
-        update_func = lambda text, source: self.update_ui(text, source)
-        
-        try:
-            self.scraper.scrape_hn_jobs(start_url, self.stdscr, update_func)
-        except Exception as e:
-            # Handle exceptions...
-            self.update_ui(f"Error during scraping: {str(e)}", "")
-        finally:
-            # Update menu items and redraw the menu after scraping is done
-            self.update_menu_items()
-            self.stdscr.refresh()
-            self.stdscr.getch()  # Wait for any key press after completion
 
     def update_ui(self, progress_text, source_text=""):
         # Clear the screen and display the progress or completion message
