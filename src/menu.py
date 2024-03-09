@@ -210,7 +210,7 @@ class MenuApp:
         elif self.current_row == 1:  # Scrape "Ask HN: Who's hiring?"
             self.start_scraping_with_status_updates()
         elif self.current_row == 2:  # Navigate jobs in local db
-            draw_table(self.stdscr)
+            draw_table(self.stdscr, self.db_path)
         elif self.current_row == 3:  # "Process job listings with GPT" option
             asyncio.run(self.process_with_gpt())
             self.stdscr.getch()  # Wait for any key press after completion
