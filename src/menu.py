@@ -180,6 +180,12 @@ class MenuApp:
         self.total_listings = self.get_total_listings()
         self.total_ai_job_recommendations = self.table_display.fetch_total_entries()
         
+        # Update the resume option
+        resume_menu = "📄 Create resume (just paste it here once)"
+        resume_str = self.read_resume_from_file()
+        if len(resume_str) > 0:
+            resume_menu = "📄 Edit resume"
+        
         # Update menu items with the new counts
         db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings)"
         ai_recommendations_menu = "😅 No job matches for your resume yet"
@@ -189,6 +195,7 @@ class MenuApp:
         # Update the relevant menu items
         self.menu_items[2] = db_menu_item
         self.menu_items[4] = ai_recommendations_menu
+        self.menu_items[0] = resume_menu
         
         # Redraw the menu to reflect the updated items
         self.draw_menu()
@@ -261,13 +268,13 @@ class MenuApp:
             self.display_text_with_scrolling(header, lines, resume_path)
         else:
             # Adjust the prompt position in capture_text_with_scrolling if needed
-            input_lines = self.capture_text_with_scrolling(stdscr, "Enter/Paste your resume. Type 'END' to finish:")
+            input_lines = self.capture_text_with_scrolling("Enter/Paste your resume. Type 'END' to finish:")
             with open(resume_path, 'w') as file:
                 file.writelines(input_lines)
             stdscr.clear()
-            self.draw_title(stdscr)  # Redraw title after clearing
-            stdscr.addstr(2, 0, "Resume saved. Press any key to continue...")
+            self.draw_title("Resume saved. Press any key to continue...")  # Redraw title after clearing
             stdscr.getch()
+            self.update_menu_items()  # Redraw the menu with updated items
     
     def update_scraping_status(self, text):
         max_y, max_x = self.stdscr.getmaxyx()
