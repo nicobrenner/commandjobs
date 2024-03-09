@@ -23,17 +23,23 @@ Note: If you want to add another source of job listings, [go to this issue](http
 ## Updates
 
 * Building in public:
-    * Finally was able to close out [#12](https://github.com/nicobrenner/commandjobs/issues/12) follow along as I resolve it in the video below
+    * Tried out [ShellGPT](https://github.com/mattvr/ShellGPT) and made a small PR to highlight its chat interface in the `README`. It's a pretty cool tool to use GPT from the terminal
 
-        * [![name](https://cdn.loom.com/sessions/thumbnails/9ff310f1a7534b2793b3ed366e9859ac-with-play.gif)](https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac)
+        * [![ShellGPT](https://cdn.loom.com/sessions/thumbnails/7f415a53cb404cb0a059a9a065addce8-with-play.gif)](https://www.loom.com/share/7f415a53cb404cb0a059a9a065addce8)
 
         https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac
 
-    * Decided to try to build this project as openly as possible, in that spirit, I just recorded a coding session in which I go through the process of trying to resolve a bug (issue #12), and finding 3 other bugs instead!
+    * Finally was able to close out [#12](https://github.com/nicobrenner/commandjobs/issues/12) follow along as I resolve it in the video below
+
+        * [![Fixing #12](https://cdn.loom.com/sessions/thumbnails/9ff310f1a7534b2793b3ed366e9859ac-with-play.gif)](https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac)
+
+        https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac
+
+    * Decided to try to build this project as openly as possible, in that spirit, I just recorded a coding session in which I go through the process of trying to resolve a bug ([issue #12](https://github.com/nicobrenner/commandjobs/issues/12)), and finding 3 other bugs instead!
 
         If you are just getting started with coding, it's also a pretty good overview of a basic software project management. In the video I show the whole workflow of not only writing code, but also managing an environment, dealing with errors, documenting the process in Github, managing git and branches, commiting, pushing and merging code, updating documentation (like now), and sharing/promoting
 
-    * [![name](https://cdn.loom.com/sessions/thumbnails/82196bfcbf0a41d58885c5b3ddc69492-with-play.gif)](https://www.loom.com/share/82196bfcbf0a41d58885c5b3ddc69492)
+    * [![Trying to solve #12](https://cdn.loom.com/sessions/thumbnails/82196bfcbf0a41d58885c5b3ddc69492-with-play.gif)](https://www.loom.com/share/82196bfcbf0a41d58885c5b3ddc69492)
 
 * Thank you to the Hacker News community for the encouragement, enthusiasm and support. Check out this thread: [Show HN: Tech jobs on the command line](https://news.ycombinator.com/item?id=39621373)
 
