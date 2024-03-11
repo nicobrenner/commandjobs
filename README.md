@@ -23,17 +23,20 @@ Note: If you want to add another source of job listings, [go to this issue](http
 ## Updates
 
 * Building in public:
+    * Was checking out the super cool [ancv](https://github.com/alexpovel/ancv), a tool for building a really cool ascii version of your resume on the terminal! 🤗 (love the joke with the Venn diagram) I wanted to check it out and ended up writing a prompt for their `README` to help with getting some json data out of a resume (which is very similar to what Command Jobs does under the hood as well). Here's the video:
+
+        * [![Trying ancv](https://cdn.loom.com/sessions/thumbnails/08fe5707eb0e46349ec55be6b2b446aa-with-play.gif)](https://www.loom.com/share/08fe5707eb0e46349ec55be6b2b446aa)
+
+
     * Tried out [ShellGPT](https://github.com/mattvr/ShellGPT) and made a small PR to highlight its chat interface in the `README`. It's a pretty cool tool to use GPT from the terminal
 
         * [![ShellGPT](https://cdn.loom.com/sessions/thumbnails/7f415a53cb404cb0a059a9a065addce8-with-play.gif)](https://www.loom.com/share/7f415a53cb404cb0a059a9a065addce8)
 
-        https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac
 
     * Finally was able to close out [#12](https://github.com/nicobrenner/commandjobs/issues/12) follow along as I resolve it in the video below
 
         * [![Fixing #12](https://cdn.loom.com/sessions/thumbnails/9ff310f1a7534b2793b3ed366e9859ac-with-play.gif)](https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac)
 
-        https://www.loom.com/share/9ff310f1a7534b2793b3ed366e9859ac
 
     * Decided to try to build this project as openly as possible, in that spirit, I just recorded a coding session in which I go through the process of trying to resolve a bug ([issue #12](https://github.com/nicobrenner/commandjobs/issues/12)), and finding 3 other bugs instead!
 
@@ -223,3 +226,6 @@ This project is open-source and available under the [Apache 2.0 License](LICENSE
                           ╚█████╔╝╚██████╔╝██████╔╝███████║                 
                            ╚════╝  ╚═════╝ ╚═════╝ ╚══════╝                 
 
+## Related projects
+
+* [ancv](https://github.com/alexpovel/ancv), get a fancy version of your resume in your terminal, very cool
