@@ -1,23 +1,27 @@
-# > Command Jobs 👨🏻‍💻
+# Command Jobs &nbsp;&nbsp; [![GitHub Repo stars](https://img.shields.io/github/stars/nicobrenner/commandjobs?style=social)](https://github.com/nicobrenner/commandjobs)
+<img src="docs/commandjobs-logo.png" alt="Command Jobs" width="300"/>
 
-Command Jobs uses AI to help software engineers find the best jobs
+Use AI to find the best jobs for your resume and preferences. A distraction-free, local-first, command line interface to scrape online jobs, and filter them to your needs
 
-![Command Jobs running via Docker](commandjobs-capture-optimized.gif)
+[![Guided Command Jobs Demo](https://cdn.loom.com/sessions/thumbnails/403ea058ab91401fbb6ccee7faa22bb7-with-play.gif)](https://www.loom.com/share/403ea058ab91401fbb6ccee7faa22bb7)
+
 
 Using AI, Command Jobs makes sure to find only the absolute best matches for your experience, skills and job preferences
 
-Stop wasting your time with online tools that are not built for you, the candidate
+Stop wasting your time with online tools that are not built for you, the job finder
 
 Command Jobs is the only job searching tool that runs from where you work, the terminal. And yes, it also doesn't make you read through hundreds of job listings just to find a couple of good matches
 
 This is just starting out! Follow along as we improve it
+
+To get started, check out [Quick Start](#quick-start), [Configuration](#configuration) and [Usage](#usage)
 
 
 🙏🏼🤗❤️
 
 Note: If you want to add another source of job listings, [go to this issue](https://github.com/nicobrenner/commandjobs/issues/23) and add it as a suggested source
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/nicobrenner/commandjobs?style=social)](https://github.com/nicobrenner/commandjobs)
+
 
 
 ## Updates
@@ -50,11 +54,11 @@ Note: If you want to add another source of job listings, [go to this issue](http
 ## Features
 
 - View and navigate AI-matched job listings directly from the terminal
-    !["AI job matches"](commandjobs-ai-matches.png)
+    !["AI job matches"](docs/commandjobs-ai-matches.png)
 
 - Scrape job listings from "Ask HN: Who's hiring?" posts on Hacker News
 
-    !["Ask HN: Who's hiring?" March 2024](hn-ask-hn-whos-hiring-march-5-wide-optimized.gif)
+    !["Ask HN: Who's hiring?" March 2024](docs/hn-ask-hn-whos-hiring-march-5-wide-optimized.gif)
 
 - Process listings with GPT to find the best matches for you
 
@@ -76,7 +80,7 @@ Note: If you want to add another source of job listings, [go to this issue](http
 
 ## Usage
 
-!["Command Jobs main menu"](commandjobs-main-menu.png)
+!["Command Jobs main menu"](docs/commandjobs-main-menu.png)
 
 After going through the Configuration and successfully running Command Jobs
 
