@@ -54,11 +54,11 @@ Note: If you want to add another source of job listings, [go to this issue](http
 ## Features
 
 - View and navigate AI-matched job listings directly from the terminal
-    !["AI job matches"](commandjobs-ai-matches.png)
+    !["AI job matches"](docs/commandjobs-ai-matches.png)
 
 - Scrape job listings from "Ask HN: Who's hiring?" posts on Hacker News
 
-    !["Ask HN: Who's hiring?" March 2024](hn-ask-hn-whos-hiring-march-5-wide-optimized.gif)
+    !["Ask HN: Who's hiring?" March 2024](docs/hn-ask-hn-whos-hiring-march-5-wide-optimized.gif)
 
 - Process listings with GPT to find the best matches for you
 
@@ -80,7 +80,7 @@ Note: If you want to add another source of job listings, [go to this issue](http
 
 ## Usage
 
-!["Command Jobs main menu"](commandjobs-main-menu.png)
+!["Command Jobs main menu"](docs/commandjobs-main-menu.png)
 
 After going through the Configuration and successfully running Command Jobs
 
