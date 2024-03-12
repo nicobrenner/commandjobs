@@ -70,6 +70,7 @@ class MatchingTableDisplay:
                     AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
                     AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
                     AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                ORDER BY jl.id DESC
                 LIMIT 1 OFFSET {offset}
             """
             self.log(f"Executing query: {query}")  # Log the query
@@ -107,6 +108,7 @@ class MatchingTableDisplay:
                     AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
                     AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
                     AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                ORDER BY jl.id DESC
                 LIMIT {self.rows_per_page} OFFSET {offset}
             """
             self.log(f"Executing query: {query}")  # Log the query
