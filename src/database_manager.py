@@ -28,40 +28,16 @@ class DatabaseManager:
         ''')
         self.conn.commit()
 
-    def fetch_matching_job_listings(self):
-        query = """
-            SELECT
-                gi.job_id,
-                json_extract(gi.answer, '$.fit_for_resume') AS fit_for_resume,
-                json_extract(gi.answer, '$.company_name') AS company_name,
-                json_extract(gi.answer, '$.how_to_apply') AS how_to_apply,
-                json_extract(gi.answer, '$.fit_justification') AS fit_justification,
-                json_extract(gi.answer, '$.available_positions') AS available_positions,
-                json_extract(gi.answer, '$.remote_positions') AS remote_positions,
-                json_extract(gi.answer, '$.hiring_in_us') AS hiring_in_us,
-                jl.original_text
-            FROM
-                gpt_interactions gi
-            JOIN
-                job_listings jl ON gi.job_id = jl.id
-            WHERE
-                json_valid(gi.answer) = 1
-                AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
-                AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
-                AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
-        """
-        self.cursor.execute(query)
-        return self.cursor.fetchall()
-
-    def fetch_job_listings(self):
+    def fetch_job_listings(self, listings_per_request=10):
         # The LIMIT here is effectively throttling GPT usage
         # every time the AI processing runs,
-        # it only checks 5 listings
-        query = """
+        # it only checks {listings_per_request} listings
+        # 10 by default
+        query = f"""
             SELECT jl.id, jl.original_text, jl.original_html
             FROM job_listings jl
             LEFT JOIN gpt_interactions gi ON jl.id = gi.job_id
-            WHERE gi.job_id IS NULL LIMIT 5
+            WHERE gi.job_id IS NULL LIMIT {listings_per_request}
         """
         self.cursor.execute(query)
         return self.cursor.fetchall()

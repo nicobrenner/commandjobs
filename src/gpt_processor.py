@@ -11,6 +11,7 @@ class GPTProcessor:
         self.db_manager = db_manager
         self.client = AsyncOpenAI(api_key=api_key)
         self.log_file = 'gpt_processor.log'  # Log file path
+        self.listings_per_request = os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH')
 
     def log(self, message):
         """Append a message to the log file."""
@@ -20,7 +21,7 @@ class GPTProcessor:
     async def process_job_listings_with_gpt(self, resume_path, update_ui_callback):
         # Use update_ui_callback to communicate with the UI
         resume = self.read_resume_from_file(resume_path)
-        job_listings = self.db_manager.fetch_job_listings()
+        job_listings = self.db_manager.fetch_job_listings(self.listings_per_request)
         self.log(f"Creating tasks for {len(job_listings)} job listings")
         tasks = [self.process_single_listing(job_id, job_text, job_html, resume, update_ui_callback) for job_id, job_text, job_html in job_listings]
         self.log(f"About to 'gather' {len(tasks)} tasks")
