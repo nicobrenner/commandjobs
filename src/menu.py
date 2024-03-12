@@ -55,13 +55,15 @@ class MenuApp:
         self.table_display = MatchingTableDisplay(self.stdscr, self.db_path)
         self.total_ai_job_recommendations = self.table_display.fetch_total_entries()
         self.total_listings = self.get_total_listings()
+        env_limit = 0 if os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH') is None else os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH')
+        self.listings_per_request = max(int(env_limit), 10)
 
         resume_menu = "📄 Create resume (just paste it here once)"
-        find_best_matches_menu = "🧠 Create your resume"
+        find_best_matches_menu = "🧠 Find best matches with AI (Create your resume first)"
         resume_str = self.read_resume_from_file()
         if len(resume_str) > 0:
             resume_menu = "📄 Edit resume"
-            find_best_matches_menu = "🧠 Find best matches for resume with AI"
+            find_best_matches_menu = f"🧠 Find best matches for resume with AI (will check {self.listings_per_request} listings at a time)"
         
         db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings)"
         ai_recommendations_menu = "😅 No job matches for your resume yet"
@@ -185,6 +187,7 @@ class MenuApp:
         resume_str = self.read_resume_from_file()
         if len(resume_str) > 0:
             resume_menu = "📄 Edit resume"
+            find_best_matches_menu = f"🧠 Find best matches for resume with AI (will check {self.listings_per_request} listings at a time)"
         
         # Update menu items with the new counts
         db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings)"
@@ -193,9 +196,10 @@ class MenuApp:
             ai_recommendations_menu = f"✅ AI found {self.total_ai_job_recommendations} listings match your resume and job preferences"
         
         # Update the relevant menu items
-        self.menu_items[2] = db_menu_item
-        self.menu_items[4] = ai_recommendations_menu
         self.menu_items[0] = resume_menu
+        self.menu_items[2] = db_menu_item
+        self.menu_items[3] = find_best_matches_menu
+        self.menu_items[4] = ai_recommendations_menu
         
         # Redraw the menu to reflect the updated items
         self.draw_menu()
