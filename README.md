@@ -199,6 +199,10 @@ To exit the application, press `q`
         COMMANDJOBS_OUTPUT_FORMAT="{\n \"small_summary\": \"Wine and Open Source developers for C-language systems programming\",\n \"company_name\": \"CodeWeavers\",\n \"available_positions\": [\n {\n \"position\": \"Wine and General Open Source Developers\",\n \"link\": \"https://www.codeweavers.com/about/jobs\"\n }\n ],\n \"tech_stack_description\": \"C-language systems programming\",\n \"use_rails\": \"No\",\n \"use_python\": \"No\",\n \"remote_positions\": \"Yes\",\n \"hiring_in_us\": \"Yes\",\n \"how_to_apply\": \"Apply through our website, here is the link: https://www.codeweavers.com/about/jobs\",\n \"back_ground_with_priority\": null,\n \"fit_for_resume\": \"No\",\n \"fit_justification\": \"The position is for Wine and Open Source developers, neither of which the resume has experience with. The job is remote in the US\"\n }"
         ```
 
+3. Increase the limit of listings to check per batch
+
+    The option `COMMANDJOBS_LISTINGS_PER_BATCH` (which should be in your `.env` file, see `sample.env`) determines how many listings are processed each time the menu option "Find best matches with AI" is executed. If you are using the default of 10, it means that every time you run the option "Find best matches", Command Jobs will make 10 requests to `gpt`. Once you trust the app, I recommend setting the limit to 500, so that the app can process all scraped listings in one go
+
 ## Contributing
 
 We welcome contributions, especially in improving scrapers and enhancing user experience. If you'd like to help, please file an issue or pull request on [our GitHub repository](https://github.com/nicobrenner/commandjobs/issues).
