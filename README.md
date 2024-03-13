@@ -149,9 +149,9 @@ To exit the application, press `q`
 
 ## Configuration
 
-1. Create a `.env` file in the root directory of the project by copying the sample.env file, and adding your OpenAI API key:
+1. Create a `.env` file in the root directory of the project by copying the `config/sample.env` file, and adding your OpenAI API key:
 
-    `cp sample.env .env`
+    `cp config/sample.env .env`
     edit the .env file
     to add your OpenAI API key
     ```
