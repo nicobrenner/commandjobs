@@ -86,7 +86,7 @@ After going through the Configuration and successfully running Command Jobs
 
 You will get a menu with the options below. To navigate the menu, just use the arrow keys and select options with Enter. You can quit at any time by pressing `q`
 
-When first running the app, open the Edit Resume section and paste the text of your resume, no need to include your name or contact info (you can see an example resume on `base_resume.sample`. Note: there's currently a minor bug when pasting a resume text, it's more reliable to paste the resume text directly into the `base_resume.txt` file, see issue #12)
+When first running the app, open the Edit Resume section and paste the text of your resume, no need to include your name or contact info (you can see an example resume on `config/base_resume.sample`. Alternatively, you can paste your resume text directly into a `base_resume.txt` file on the base folder of the code
 
 Then, get some job listings into the app by running Scrape "Ask HN: Who's hiring?". You can see the first few listings in the Navigate jobs in the local db section (if you want to see more, you can also open `job_listings.db` directly with sqlite3 and check out the contents)
 
@@ -128,12 +128,6 @@ To exit the application, press `q`
 
         - `docker-compose -f docker/docker-compose.yml run app`
 
-    3. Alternatively, you can make `commandjobs.sh` executable and run it:
-
-        - `chmod +x commandjobs.sh`
-        - `./commandjobs.sh`
-
-
 
 ### Running Directly via Python in a Virtual Environment (if you don't want to use Docker)
 
@@ -155,9 +149,9 @@ To exit the application, press `q`
 
 ## Configuration
 
-1. Create a `.env` file in the root directory of the project by copying the sample.env file, and adding your OpenAI API key:
+1. Create a `.env` file in the root directory of the project by copying the `config/sample.env` file, and adding your OpenAI API key:
 
-    `cp sample.env .env`
+    `cp config/sample.env .env`
     edit the .env file
     to add your OpenAI API key
     ```
