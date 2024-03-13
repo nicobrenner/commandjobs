@@ -8,7 +8,7 @@ COPY . /commandjobs
 WORKDIR /commandjobs
 
 # Install any needed packages specified in requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r config/requirements.txt
 
 # Run menu.py when the container launches
 CMD ["python3", "src/menu.py"]
