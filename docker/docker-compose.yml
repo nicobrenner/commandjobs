@@ -5,19 +5,21 @@
 version: "3.7"
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     
     # Set container name
     container_name: commandjobs
 
     # Set environment variables
     environment:
-      - MENU_APP=/repo/src/menu.py
+      - MENU_APP=src/menu.py
 
     # Mount entire project into docker container under /repo
     volumes:
-      - ./:/repo
-      - ./docker-entrypoint.sh:/repo/docker-entrypoint.sh
+      - ../:/commandjobs
+      - ./docker-entrypoint.sh:/commandjobs/docker-entrypoint.sh
 
     network_mode: host
 

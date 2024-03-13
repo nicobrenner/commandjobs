@@ -121,13 +121,12 @@ To exit the application, press `q`
 
     1. Build the Docker image:
 
-        - `docker-compose up app`
+        - `docker-compose -f docker/docker-compose.yml build`
 
-        This will build the image and then error out when running, that's ok
 
-    2. Run the Docker container (make sure you've setup your OpenAI API key in your `.env` file - see Configuration section below):
+    2. Run the Docker container (make sure you've setup your OpenAI API key in your `.env` file - see [Configuration](#configuration) section below):
 
-        - `docker-compose run app`
+        - `docker-compose -f docker/docker-compose.yml run app`
 
     3. Alternatively, you can make `commandjobs.sh` executable and run it:
 
@@ -146,11 +145,11 @@ To exit the application, press `q`
 
 2. Install the dependencies:
 
-    - `pip3 install -r requirements.txt`
+    - `pip install -r requirements.txt`
 
 3. Run the application:
 
-    - `python3 src/menu.py`
+    - `python src/menu.py`
 
 
 
@@ -180,25 +179,25 @@ To exit the application, press `q`
 
 2. Modify the prompt so that it matches your preferences. The prompt has #X sections:
 
-    * COMMANDJOBS_ROLE: list the roles that you are looking for
+    * `COMMANDJOBS_ROLE`: list the roles that you are looking for
         ```
         COMMANDJOBS_ROLE=backend engineer, or fullstack engineer, or senior engineer, or senior tech lead, or engineering manager, or senior enginering manager, or founding engineer, or founding fullstack engineer, or something similar
         ```
     
-    * COMMANDJOBS_IDEAL_JOB_QUESTIONS: explain what is a good fit for you
+    * `COMMANDJOBS_IDEAL_JOB_QUESTIONS`: explain what is a good fit for you
         ```
         COMMANDJOBS_IDEAL_JOB_QUESTIONS=and the company uses either Ruby, Rails, Ruby on Rails, or Python, the position doesn't require any knowledge or experience in any of the following: {job_requirement_exclusions}, the position is remote, it's for the US and the description matches the resume? (Yes or No), justify the Yes or No about the role being a good fit for the experience of the resume in one sentence.
         ```
     
-    * COMMANDJOBS_EXCLUSIONS: list things to avoid (this takes some trial and error to get right, iterating with the matches you get each time)
+    * `COMMANDJOBS_EXCLUSIONS`: list things to avoid (this takes some trial and error to get right, iterating with the matches you get each time)
         ```
         COMMANDJOBS_EXCLUSIONS=VMS (video management systems), computer vision systems, Java, C++, C#, Grails, ML, Machine Learning, PyTorch, training models
         ```
-    * COMMANDJOBS_PROMPT: the prompt includes all the other elements as well as the questions that we want answers about from GPT
+    * `COMMANDJOBS_PROMPT`: the prompt includes all the other elements as well as the questions that we want answers about from GPT
         ```
         COMMANDJOBS_PROMPT=Given the below job listing html, and resume text. Listing:\n{job_html}\n\nResume:\n{resume}\n\nPlease provide the following information about the listing: brief 2 sentence summary of the listing, company name, [list of available positions, with individual corresponding links if available], tech stack description, do they use rails? (Yes or No), do they use python? (Yes or No), are the positions remote (not hybrid, not onsite)? (Yes or No), are they hiring in the US? (Yes or No), how to apply to the job? (provide 1 sentence max description, include link or email address if necessary), Does the role prioritize candidates with a background in a specific industry sector (e.g., tech, finance, healthcare)?, does the job seem like a good fit for the resume (Only say Yes if the role is for {roles} {ideal_job_questions}\n\nProvide output in JSON format, use this example for reference, always with the same keys, but replace the values with the answers for the previous requests for information: \n{output_format}
         ```
-    * COMMANDJOBS_OUTPUT_FORMAT: this specifies the output format for the prompt, including an example to follow - it's important that the structure and fields of the format matches the questions from the prompt
+    * `COMMANDJOBS_OUTPUT_FORMAT`: this specifies the output format for the prompt, including an example to follow - it's important that the structure and fields of the format matches the questions from the prompt
         ```
         COMMANDJOBS_OUTPUT_FORMAT="{\n \"small_summary\": \"Wine and Open Source developers for C-language systems programming\",\n \"company_name\": \"CodeWeavers\",\n \"available_positions\": [\n {\n \"position\": \"Wine and General Open Source Developers\",\n \"link\": \"https://www.codeweavers.com/about/jobs\"\n }\n ],\n \"tech_stack_description\": \"C-language systems programming\",\n \"use_rails\": \"No\",\n \"use_python\": \"No\",\n \"remote_positions\": \"Yes\",\n \"hiring_in_us\": \"Yes\",\n \"how_to_apply\": \"Apply through our website, here is the link: https://www.codeweavers.com/about/jobs\",\n \"back_ground_with_priority\": null,\n \"fit_for_resume\": \"No\",\n \"fit_justification\": \"The position is for Wine and Open Source developers, neither of which the resume has experience with. The job is remote in the US\"\n }"
         ```

@@ -24,6 +24,7 @@ class MenuApp:
             "BASE_RESUME_PATH",
             "DB_PATH",
             "HN_START_URL",
+            "COMMANDJOBS_LISTINGS_PER_BATCH",
         )
         for required_value in required_values:
             if not os.getenv(required_value):
@@ -135,7 +136,8 @@ class MenuApp:
             start_x = max(0, (max_x - len(line)) // 2)
             self.stdscr.addstr(i + (max_y - len(splash_text)) // 2, start_x, line)
         self.stdscr.refresh()
-        curses.napms(1000)  # Display the splash screen for 500 milliseconds
+        # Display the splash screen for 500 milliseconds
+        curses.napms(1000)
         self.stdscr.attroff(curses.color_pair(6))
 
     def draw_title(self, title="Command Jobs"):
@@ -217,7 +219,6 @@ class MenuApp:
             draw_table(self.stdscr, self.db_path)
         elif self.current_row == 3:  # "Process job listings with GPT" option
             asyncio.run(self.process_with_gpt())
-            self.stdscr.getch()  # Wait for any key press after completion
         elif self.current_row == 4:  # Index of the new menu option
             self.table_display.draw_table()
         self.stdscr.clear()
