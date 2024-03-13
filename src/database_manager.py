@@ -28,16 +28,17 @@ class DatabaseManager:
         ''')
         self.conn.commit()
 
-    def fetch_job_listings(self, listings_per_request=10):
+    def fetch_job_listings(self, listings_per_batch):
         # The LIMIT here is effectively throttling GPT usage
         # every time the AI processing runs,
-        # it only checks {listings_per_request} listings
+        # it only checks {listings_per_batch} listings
         # 10 by default
+        listings_per_batch = listings_per_batch or 10
         query = f"""
             SELECT jl.id, jl.original_text, jl.original_html
             FROM job_listings jl
             LEFT JOIN gpt_interactions gi ON jl.id = gi.job_id
-            WHERE gi.job_id IS NULL LIMIT {listings_per_request}
+            WHERE gi.job_id IS NULL LIMIT {listings_per_batch}
         """
         self.cursor.execute(query)
         return self.cursor.fetchall()

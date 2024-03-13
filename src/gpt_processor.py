@@ -11,7 +11,9 @@ class GPTProcessor:
         self.db_manager = db_manager
         self.client = AsyncOpenAI(api_key=api_key)
         self.log_file = 'gpt_processor.log'  # Log file path
-        self.listings_per_request = os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH')
+        self.listings_per_batch = os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH')
+        if self.listings_per_batch  is None:
+            raise ValueError(f"COMMANDJOBS_LISTINGS_PER_BATCH is not set; exiting.")
 
     def log(self, message):
         """Append a message to the log file."""
@@ -21,13 +23,14 @@ class GPTProcessor:
     async def process_job_listings_with_gpt(self, resume_path, update_ui_callback):
         # Use update_ui_callback to communicate with the UI
         resume = self.read_resume_from_file(resume_path)
-        job_listings = self.db_manager.fetch_job_listings(self.listings_per_request)
+        job_listings = self.db_manager.fetch_job_listings(self.listings_per_batch)
         self.log(f"Creating tasks for {len(job_listings)} job listings")
         tasks = [self.process_single_listing(job_id, job_text, job_html, resume, update_ui_callback) for job_id, job_text, job_html in job_listings]
         self.log(f"About to 'gather' {len(tasks)} tasks")
         await asyncio.gather(*tasks)
 
     async def process_single_listing(self, job_id, job_text, job_html, resume, update_ui_callback):
+        update_ui_callback(f"Processing job_id: {job_id}")
         self.log(f"Job / Resume: {job_text} {resume}")
         prompt = self.generate_prompt(job_text, job_html, resume)
         self.log(f"Prompt: {prompt}")  # Log the prompt
@@ -35,9 +38,12 @@ class GPTProcessor:
             print("Prompt is None or empty, skipping GPT request.")
             return
         answer = await self.get_gpt_response(prompt)
-        self.db_manager.save_gpt_interaction(job_id, prompt, answer)
-        # Use update_ui_callback to update the UI
-        update_ui_callback(f"Processing job_id: {job_id}")
+        try:
+            self.db_manager.save_gpt_interaction(job_id, prompt, answer)
+        except Exception as e:
+            update_ui_callback(f"Failed to process listings with GPT: {str(e)}")
+            self.log(f"Failed to process listings with GPT: {str(e)}")
+        
         self.log(f"Processed job_id: {job_id}")
 
     def read_resume_from_file(self, file_path):
