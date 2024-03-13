@@ -42,6 +42,15 @@ class DatabaseManager:
         """
         self.cursor.execute(query)
         return self.cursor.fetchall()
+    
+    def fetch_processed_listings_count(self):
+        query = "SELECT COUNT(id) FROM gpt_interactions"
+        self.cursor.execute(query)
+        result = self.cursor.fetchone()  # Fetch the first row of the result set
+        if result:
+            return result[0]  # Return the first element of the tuple, which is the count
+        else:
+            return 0  # Return 0 if no rows are found, for safety
 
     def save_gpt_interaction(self, job_id, prompt, answer):
         self.cursor.execute("INSERT INTO gpt_interactions (job_id, prompt, answer) VALUES (?, ?, ?)", (job_id, prompt, answer))

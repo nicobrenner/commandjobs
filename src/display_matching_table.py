@@ -11,10 +11,6 @@ class MatchingTableDisplay:
         self.highlighted_row_index = 0
         self.current_page = 1
         self.total_pages = 0
-        curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLUE)  # Highlight color
-        curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)  # Highlight headers color
-        curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_MAGENTA)  # Highlight headers color
-        curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)  # Highlight headers color
         self.rows_per_page = 3
         logging.basicConfig(filename='matching_table_display.log', level=logging.DEBUG)
 

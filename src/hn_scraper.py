@@ -9,7 +9,7 @@ class ScrapingInterrupt(Exception):
     pass
 
 class HNScraper:
-    def __init__(self, db_path='/repo/job_listings.db'):
+    def __init__(self, db_path='job_listings.db'):
         self.db_path = db_path
         # Define the base URL for Ask HN: Who's hiring
         self.base_url = 'https://news.ycombinator.com/item?id=39562986&p=1'
