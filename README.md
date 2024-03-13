@@ -128,12 +128,6 @@ To exit the application, press `q`
 
         - `docker-compose -f docker/docker-compose.yml run app`
 
-    3. Alternatively, you can make `commandjobs.sh` executable and run it:
-
-        - `chmod +x commandjobs.sh`
-        - `./commandjobs.sh`
-
-
 
 ### Running Directly via Python in a Virtual Environment (if you don't want to use Docker)
 
