@@ -3,13 +3,15 @@ import unittest
 from unittest.mock import patch, MagicMock
 from menu import MenuApp
 
+DB_PATH='test_db.db'
+
 class TestManageResume(unittest.TestCase):
     @patch('menu.curses')
     @patch('menu.os.getenv')
     
     def test_manage_resume(self, mock_getenv, mock_curses):
         # Mock environment variables
-        mock_getenv.side_effect = lambda x: {'OPENAI_API_KEY': 'test_key', 'BASE_RESUME_PATH': 'temp_base_resume.txt', 'DB_PATH': 'test_db.db', 'HN_START_URL': 'test_url', 'COMMANDJOBS_LISTINGS_PER_BATCH': '10', 'OPENAI_GPT_MODEL': 'gpt-3.5'}.get(x, None)
+        mock_getenv.side_effect = lambda x: {'OPENAI_API_KEY': 'test_key', 'BASE_RESUME_PATH': 'temp_base_resume.txt', 'HN_START_URL': 'test_url', 'COMMANDJOBS_LISTINGS_PER_BATCH': '10', 'OPENAI_GPT_MODEL': 'gpt-3.5'}.get(x, None)
                 
         # Mock stdscr object
         mock_stdscr = MagicMock()
@@ -45,7 +47,7 @@ class TestManageResume(unittest.TestCase):
         self.assertEqual(exit_message, f'Resume saved to {temp_test_resume_path}')
         
         # Verify the text was saved to base_resume.txt
-        with open('base_resume.txt', 'r') as file:
+        with open(temp_test_resume_path, 'r') as file:
             saved_text = file.read()
 
         self.assertEqual(saved_text, test_resume_text)
@@ -54,7 +56,7 @@ class TestManageResume(unittest.TestCase):
         if os.path.exists(temp_test_resume_path):
             os.remove(temp_test_resume_path)
         
-        temp_test_db_path = os.getenv('DB_PATH')
+        temp_test_db_path = DB_PATH
         if os.path.exists(temp_test_db_path):
             os.remove(temp_test_db_path)
 

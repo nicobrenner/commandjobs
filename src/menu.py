@@ -14,6 +14,8 @@ import threading
 from queue import Queue
 from dotenv import load_dotenv
 
+DB_PATH='job_listings.db'
+
 class MenuApp:
     def __init__(self, stdscr, logger):
         # Load environment variables
@@ -22,7 +24,6 @@ class MenuApp:
             "OPENAI_API_KEY",
             "OPENAI_GPT_MODEL",
             "BASE_RESUME_PATH",
-            "DB_PATH",
             "HN_START_URL",
             "COMMANDJOBS_LISTINGS_PER_BATCH",
         )
@@ -44,13 +45,7 @@ class MenuApp:
         self.logger = logger
         self.stdscr = stdscr
         self.setup_ncurses()
-        self.db_path = os.getenv('DB_PATH')
-        if self.db_path is None:
-            # I don't like raising an exception here, but haven't been able to
-            # push out an error message using print() before closing
-            # the program with sys.exit(1) (at least with docker, there's no output)
-            raise ValueError("DB_PATH variable is not set. Please configure your .env file")
-        
+        self.db_path = DB_PATH
         self.db_manager = DatabaseManager(self.db_path)  # Specify the path
         self.gpt_processor = GPTProcessor(self.db_manager, os.getenv('OPENAI_API_KEY'))
         self.resume_path = os.getenv('BASE_RESUME_PATH')
@@ -204,6 +199,7 @@ class MenuApp:
         
         # Update the resume option
         resume_menu = "📄 Create resume (just paste it here once)"
+        find_best_matches_menu = "🧠 Find best matches with AI (Create your resume first)"
         resume_str = self.read_resume_from_file()
         if len(resume_str) > 0:
             resume_menu = "📄 Edit resume"

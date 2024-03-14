@@ -153,8 +153,7 @@ To exit the application, press `q`
     OPENAI_API_KEY=your_openai_api_key_here
     OPENAI_GPT_MODEL=gpt-3.5-turbo
 
-    BASE_RESUME_PATH=/repo/base_resume.txt
-    DB_PATH=/repo/job_listings.db
+    BASE_RESUME_PATH=base_resume.txt
     HN_START_URL=https://news.ycombinator.com/item?id=39562986&p=1
 
     ...
