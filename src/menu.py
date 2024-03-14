@@ -77,29 +77,20 @@ class MenuApp:
         self.run()
         
     async def process_with_gpt(self):
-        try:
-            def update_ui(message):
-                self.stdscr.clear()
-                self.stdscr.addstr(0, 0, message)
-                self.stdscr.refresh()
-                self.logger.debug("It's getting back to update_ui at least")
-            
+        try:           
             self.logger.debug("Calling: self.gpt_processor.process_job_listings_with_gpt")
-            await self.gpt_processor.process_job_listings_with_gpt(self.resume_path, update_ui_callback=update_ui)
+            await self.gpt_processor.process_job_listings_with_gpt(self.resume_path, update_ui_callback=self.update_status_bar)
         except Exception as e:
             self.logger.exception("Failed to process listings with GPT: %s", str(e))
         finally:
-            # Update menu items and redraw the menu after scraping is done
             self.processed_listings_count = self.db_manager.fetch_processed_listings_count()
-            self.update_menu_items()
-            self.stdscr.refresh()
 
     def read_resume_from_file(self):
         try:
             with open(self.resume_path, 'r') as file:
                 return file.read()
         except FileNotFoundError:
-            return ""
+            return ''
 
     def setup_ncurses(self):
         curses.curs_set(0)  # Turn off cursor visibility
@@ -238,6 +229,7 @@ class MenuApp:
         elif self.current_row == 4:  # Index of the new menu option
             self.table_display.draw_table()
         self.stdscr.clear()
+        self.update_menu_items()
         if exit_message != '':
             self.update_status_bar(exit_message)
 
@@ -333,21 +325,8 @@ class MenuApp:
         self.scraping_done_event.wait()  # Wait for the event to be set by the scraping thread
         # Retrieve the result from the queue
         new_listings_count = result_queue.get()  # This will block until the result is available
-        self.update_menu_items()  # Update the menu items after scraping
-        self.draw_menu()  # Redraw the menu with updated items
         self.update_status_bar(f"Scraping completed {new_listings_count} new listings added")
-        self.stdscr.refresh()  # Refresh the screen to show the updated menu
-        self.stdscr.getch()  # Wait for any key press after completion
         self.scraping_done_event.clear()  # Clear the event for the next scraping operation
-
-    def update_ui(self, progress_text, source_text=""):
-        # Clear the screen and display the progress or completion message
-        self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "Scraping progress:")
-        self.stdscr.addstr(2, 0, progress_text)
-        if source_text:
-            self.stdscr.addstr(3, 0, f"Source: {source_text}")
-        self.stdscr.refresh()
 
     # Despite the name of the method, this currently
     # is not handling scrolling 😅
