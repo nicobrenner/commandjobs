@@ -1,5 +1,6 @@
 import asyncio
 import os
+import json
 
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -21,28 +22,37 @@ class GPTProcessor:
             f.write(f"{message}\n")
 
     async def process_job_listings_with_gpt(self, resume_path, update_ui_callback):
-        # Use update_ui_callback to communicate with the UI
+        update_ui_callback(f"Getting job listings")
         resume = self.read_resume_from_file(resume_path)
         job_listings = self.db_manager.fetch_job_listings(self.listings_per_batch)
+        update_ui_callback(f"Processing {len(job_listings)} listings with AI. Please wait...")
         self.log(f"Creating tasks for {len(job_listings)} job listings")
         tasks = [self.process_single_listing(job_id, job_text, job_html, resume, update_ui_callback) for job_id, job_text, job_html in job_listings]
         self.log(f"About to 'gather' {len(tasks)} tasks")
         await asyncio.gather(*tasks)
 
     async def process_single_listing(self, job_id, job_text, job_html, resume, update_ui_callback):
-        update_ui_callback(f"Processing job_id: {job_id}")
-        self.log(f"Job / Resume: {job_text} {resume}")
         prompt = self.generate_prompt(job_text, job_html, resume)
         self.log(f"Prompt: {prompt}")  # Log the prompt
         if not prompt:  # Check if prompt is None or empty
-            print("Prompt is None or empty, skipping GPT request.")
-            return
+            raise ValueError("Prompt is None or empty, skipping GPT request.")
+        
+        answer_dict = {}
         answer = await self.get_gpt_response(prompt)
+        
         try:
             self.db_manager.save_gpt_interaction(job_id, prompt, answer)
         except Exception as e:
             update_ui_callback(f"Failed to process listings with GPT: {str(e)}")
             self.log(f"Failed to process listings with GPT: {str(e)}")
+            
+        # Attempt to load the JSON string into a Python dictionary
+        try:
+            answer_dict = json.loads(answer)
+            # Show a little preview of the processed jobs
+            update_ui_callback(f"Processed {answer_dict['company_name']} / {answer_dict['small_summary'][:50]}")
+        except json.JSONDecodeError:
+            self.log(f"Invalid JSON format: {answer}")
         
         self.log(f"Processed job_id: {job_id}")
 
