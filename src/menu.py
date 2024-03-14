@@ -1,7 +1,7 @@
 import curses
 import textwrap
 import os
-from hn_scraping import HNScraper
+from hn_scraper import HNScraper
 from display_table import draw_table
 from database_manager import DatabaseManager
 from display_matching_table import MatchingTableDisplay
@@ -42,6 +42,8 @@ class MenuApp:
 
         self.scraping_done_event = threading.Event()  # Event to signal scraping completion
         self.logger = logger
+        self.stdscr = stdscr
+        self.setup_ncurses()
         self.db_path = os.getenv('DB_PATH')
         if self.db_path is None:
             # I don't like raising an exception here, but haven't been able to
@@ -52,9 +54,9 @@ class MenuApp:
         self.db_manager = DatabaseManager(self.db_path)  # Specify the path
         self.gpt_processor = GPTProcessor(self.db_manager, os.getenv('OPENAI_API_KEY'))
         self.resume_path = os.getenv('BASE_RESUME_PATH')
-        self.stdscr = stdscr
         self.table_display = MatchingTableDisplay(self.stdscr, self.db_path)
         self.total_ai_job_recommendations = self.table_display.fetch_total_entries()
+        self.processed_listings_count = self.db_manager.fetch_processed_listings_count()
         self.total_listings = self.get_total_listings()
         env_limit = 0 if os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH') is None else os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH')
         self.listings_per_request = max(int(env_limit), 10)
@@ -66,16 +68,18 @@ class MenuApp:
             resume_menu = "📄 Edit resume"
             find_best_matches_menu = f"🧠 Find best matches for resume with AI (will check {self.listings_per_request} listings at a time)"
         
-        db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings)"
+        total_processed = f'{self.processed_listings_count} processed with AI so far'
+        db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings, {total_processed})"
         ai_recommendations_menu = "😅 No job matches for your resume yet"
         if self.total_ai_job_recommendations > 0:
-            ai_recommendations_menu = f"✅ AI found {self.total_ai_job_recommendations} listings match your resume and job preferences"
+            ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
 
         self.menu_items = [resume_menu, "🕸  Scrape \"Ask HN: Who's hiring?\"",
                            db_menu_item, find_best_matches_menu, 
                            ai_recommendations_menu]  # New menu option added
         self.current_row = 0
-        self.setup()
+        self.display_splash_screen()
+        self.run()
         
     async def process_with_gpt(self):
         try:
@@ -91,9 +95,9 @@ class MenuApp:
             self.logger.exception("Failed to process listings with GPT: %s", str(e))
         finally:
             # Update menu items and redraw the menu after scraping is done
+            self.processed_listings_count = self.db_manager.fetch_processed_listings_count()
             self.update_menu_items()
             self.stdscr.refresh()
-            self.stdscr.getch()  # Wait for any key press after completion
 
     def read_resume_from_file(self):
         try:
@@ -102,14 +106,21 @@ class MenuApp:
         except FileNotFoundError:
             return ""
 
-    def setup(self):
+    def setup_ncurses(self):
         curses.curs_set(0)  # Turn off cursor visibility
-        self.display_splash_screen()
         self.stdscr.keypad(True)  # Enable keypad mode
         curses.start_color()
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
-        self.run()
+        curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_BLUE)  # Highlight color
+        curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_WHITE)  # Highlight headers color
+        curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_MAGENTA)  # Highlight headers color
+        curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)  # Highlight headers color
+        curses.init_pair(7, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(8, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(9, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.init_pair(10, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        curses.init_pair(11, curses.COLOR_RED, curses.COLOR_BLACK)
 
     def display_splash_screen(self):
         splash_text = [
@@ -130,15 +141,23 @@ class MenuApp:
         ]
         self.stdscr.clear()
         max_y, max_x = self.stdscr.getmaxyx()
-        self.stdscr.attron(curses.color_pair(6))
-        for i, line in enumerate(splash_text):
-            # Calculate the starting position for each line to be centered
-            start_x = max(0, (max_x - len(line)) // 2)
-            self.stdscr.addstr(i + (max_y - len(splash_text)) // 2, start_x, line)
+        
+        # Repeat base animation 3 times
+        for i in range(0, 3):
+            # Loop through color pairs 7 to 11
+            # defined inside setup_ncurses()
+            for color in range(7, 12):
+                self.stdscr.attron(curses.color_pair(color))
+                for i, line in enumerate(splash_text):
+                    # Calculate the starting position for each line to be centered
+                    start_x = max(0, (max_x - len(line)) // 2)
+                    self.stdscr.addstr(i + (max_y - len(splash_text)) // 2, start_x, line)
+                self.stdscr.refresh()
+                # 100ms per color
+                curses.napms(100)
+                self.stdscr.attroff(curses.color_pair(color))
+        self.stdscr.clear()
         self.stdscr.refresh()
-        # Display the splash screen for 500 milliseconds
-        curses.napms(1000)
-        self.stdscr.attroff(curses.color_pair(6))
 
     def draw_title(self, title="Command Jobs"):
         max_y, max_x = self.stdscr.getmaxyx()
@@ -149,7 +168,6 @@ class MenuApp:
         self.stdscr.addstr(1, 0, "-" * max_x)
 
     def draw_menu(self):
-        self.stdscr.clear()
         self.draw_title()
         h, w = self.stdscr.getmaxyx()
         for idx, item in enumerate(self.menu_items):
@@ -192,10 +210,11 @@ class MenuApp:
             find_best_matches_menu = f"🧠 Find best matches for resume with AI (will check {self.listings_per_request} listings at a time)"
         
         # Update menu items with the new counts
-        db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings)"
+        total_processed = f'{self.processed_listings_count} processed with AI so far'
+        db_menu_item = f"💾 Navigate jobs in local db ({self.total_listings} listings, {total_processed})"
         ai_recommendations_menu = "😅 No job matches for your resume yet"
         if self.total_ai_job_recommendations > 0:
-            ai_recommendations_menu = f"✅ AI found {self.total_ai_job_recommendations} listings match your resume and job preferences"
+            ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
         
         # Update the relevant menu items
         self.menu_items[0] = resume_menu
@@ -211,8 +230,9 @@ class MenuApp:
     # eg. first option (0): self.menu_items[0] = resume_menu 
     # = "Create or replace base resume"
     def execute_menu_action(self):
+        exit_message = ''
         if self.current_row == 0:  # Create or replace base resume
-            self.manage_resume(self.stdscr)
+            exit_message = self.manage_resume(self.stdscr)
         elif self.current_row == 1:  # Scrape "Ask HN: Who's hiring?"
             self.start_scraping_with_status_updates()
         elif self.current_row == 2:  # Navigate jobs in local db
@@ -222,11 +242,15 @@ class MenuApp:
         elif self.current_row == 4:  # Index of the new menu option
             self.table_display.draw_table()
         self.stdscr.clear()
+        if exit_message != '':
+            self.update_status_bar(exit_message)
 
-    def display_text_with_scrolling(self, header, lines, resume_path):
+    def display_text_with_scrolling(self, header, lines):
         curses.noecho()
         max_y, max_x = self.stdscr.getmaxyx()
         offset = 0  # How much we've scrolled
+        resume_updated = False
+        new_lines = ''
 
         while True:
             self.stdscr.clear()
@@ -249,10 +273,12 @@ class MenuApp:
                 if offset > 0:
                     offset -= 1
             elif key in [ord('r'), ord('R')]:
-                lines = self.capture_text_with_scrolling()
-                with open(resume_path, 'w') as file:
-                    file.writelines(lines)
+                new_lines = self.capture_text_with_scrolling()
+                if len(new_lines) > 0:
+                    resume_updated = new_lines != lines
                 break
+        
+        return resume_updated
     
     def get_total_listings(self):
         """Return the total number of job listings in the database."""
@@ -266,24 +292,25 @@ class MenuApp:
     def manage_resume(self, stdscr):
         curses.echo()
         resume_path = os.getenv('BASE_RESUME_PATH')
+        
+        resume_updated = False
+        exit_message = 'Resume not updated'
 
         if os.path.exists(resume_path):
             with open(resume_path, 'r') as file:
                 lines = file.readlines()
             
             header = "Base Resume (Press 'q' to go back, 'r' to replace):"  # Use a separator for clarity
-            self.display_text_with_scrolling(header, lines, resume_path)
+            resume_updated = self.display_text_with_scrolling(header, lines)
         else:
-            # Adjust the prompt position in capture_text_with_scrolling if needed
-            input_lines = self.capture_text_with_scrolling()
-            with open(resume_path, 'w') as file:
-                file.writelines(input_lines)
-            stdscr.clear()
-            self.draw_title("Resume saved. Press any key to continue...")  # Redraw title after clearing
-            stdscr.getch()
-            self.update_menu_items()  # Redraw the menu with updated items
+            resume_updated = self.capture_text_with_scrolling()
+            
+        if resume_updated:
+            exit_message = f"Resume saved to {self.resume_path}"
+        
+        return exit_message
     
-    def update_scraping_status(self, text):
+    def update_status_bar(self, text):
         max_y, max_x = self.stdscr.getmaxyx()
         # Ensure the status text will not overflow the screen width
         status_text = text[:max_x - 3]
@@ -300,11 +327,11 @@ class MenuApp:
     def start_scraping_with_status_updates(self):
         # Create a queue to receive the result from the scraping thread
         result_queue = Queue()
-        # Pass self.update_scraping_status as the update function to HNScraper
+        # Pass self.update_status_bar as the update function to HNScraper
         self.scraper = HNScraper(self.db_path)  # Initialize the scraper
         start_url = os.getenv('HN_START_URL')  # Starting URL
         scraping_thread = threading.Thread(target=self.scraper.scrape_hn_jobs, args=(
-            start_url, self.stdscr, self.update_scraping_status, self.scraping_done_event, result_queue))
+            start_url, self.stdscr, self.update_status_bar, self.scraping_done_event, result_queue))
         scraping_thread.start()
         # Call this method after the scraping is done
         self.scraping_done_event.wait()  # Wait for the event to be set by the scraping thread
@@ -312,7 +339,7 @@ class MenuApp:
         new_listings_count = result_queue.get()  # This will block until the result is available
         self.update_menu_items()  # Update the menu items after scraping
         self.draw_menu()  # Redraw the menu with updated items
-        self.update_scraping_status(f"Scraping completed {new_listings_count} new listings added")
+        self.update_status_bar(f"Scraping completed {new_listings_count} new listings added")
         self.stdscr.refresh()  # Refresh the screen to show the updated menu
         self.stdscr.getch()  # Wait for any key press after completion
         self.scraping_done_event.clear()  # Clear the event for the next scraping operation
@@ -380,7 +407,14 @@ class MenuApp:
                 x += 1
             self.stdscr.refresh()
 
-        return ''.join(text)
+        input_lines = ''.join(text)
+        if text != []:
+            with open(self.resume_path, 'w') as file:
+                file.writelines(input_lines)
+
+        curses.curs_set(0) # hide cursor again
+
+        return input_lines
 
 # Ensure logging is configured to write to a file or standard output
 logging.basicConfig(filename='application.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(message)s')
