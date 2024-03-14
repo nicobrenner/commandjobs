@@ -53,6 +53,10 @@ class TestManageResume(unittest.TestCase):
         # Remove temp test resume file
         if os.path.exists(temp_test_resume_path):
             os.remove(temp_test_resume_path)
+        
+        temp_test_db_path = os.getenv('DB_PATH')
+        if os.path.exists(temp_test_db_path):
+            os.remove(temp_test_db_path)
 
 if __name__ == '__main__':
     unittest.main()
