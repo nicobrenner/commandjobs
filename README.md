@@ -29,7 +29,7 @@ Note: If you want to add another source of job listings, [go to this issue](http
 * Building in public:
     * Here's a little bit of the internals of the application. Very high level overview of the features as well as the database. If you want to see more, or would like a deeper explanation, please create an Issue, thank you
 
-        * * [![Command Jobs Internals](https://cdn.loom.com/sessions/thumbnails/cf1ad06f82a344f18e3e5a569857d60b-with-play.gif)](https://www.loom.com/share/cf1ad06f82a344f18e3e5a569857d60b)
+        * [![Command Jobs Internals](https://cdn.loom.com/sessions/thumbnails/cf1ad06f82a344f18e3e5a569857d60b-with-play.gif)](https://www.loom.com/share/cf1ad06f82a344f18e3e5a569857d60b)
 
     * Just wrote the first test! 😅 And it's in no small part thanks to Agentic's [Glide](https://glide.agenticlabs.com/task/IqHd0RV), which they recently launched ([see announcement here](https://news.ycombinator.com/item?id=39682183)). I was about to switch from ncurses to [python-prompt-toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit), and failing that from python to Go, so I could build Command Jobs using [Bubble Tea](https://github.com/charmbracelet/bubbletea) 🤩😍🤤
 
@@ -223,6 +223,20 @@ To exit the application, press `q`
         ```sql
         AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
         ```
+
+    Note: the database is a sqlite3 database, so you can also just open it `sqlite3 job_listings.db` and then try out a query like the one below, and then experiment to see what you find. Regardless of filtering, all the answers and prompts should be stored in the `gpt_interactions` table (checkout the latest update video about the internals):
+
+    ```sql
+    SELECT COUNT(*) FROM (
+                    SELECT gi.job_id
+                    FROM gpt_interactions gi
+                    JOIN job_listings jl ON gi.job_id = jl.id
+                    WHERE json_valid(gi.answer) = 1
+                    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+                    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+                    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                )
+    ```
 
     You should adjust that to your preferences and you can mix and match with the questions/answers you want to get from your prompt
 
