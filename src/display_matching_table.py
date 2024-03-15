@@ -13,6 +13,13 @@ class MatchingTableDisplay:
         self.total_pages = 0
         self.rows_per_page = 3
         logging.basicConfig(filename='matching_table_display.log', level=logging.DEBUG)
+        
+        self.good_match_filters = '''
+            json_valid(gi.answer) = 1
+            AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+            AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+            AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+        '''
 
     def log(self, message):
         """Log a message for debugging."""
@@ -22,15 +29,12 @@ class MatchingTableDisplay:
         try:
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
-            cur.execute("""
+            cur.execute(f"""
                 SELECT COUNT(*) FROM (
                     SELECT gi.job_id
                     FROM gpt_interactions gi
                     JOIN job_listings jl ON gi.job_id = jl.id
-                    WHERE json_valid(gi.answer) = 1
-                    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
-                    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
-                    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                    WHERE {self.good_match_filters}
                 )
             """)
             total_entries = cur.fetchone()[0]
@@ -62,10 +66,7 @@ class MatchingTableDisplay:
                 JOIN
                     job_listings jl ON gi.job_id = jl.id
                 WHERE
-                    json_valid(gi.answer) = 1
-                    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
-                    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
-                    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                    {self.good_match_filters}
                 ORDER BY jl.id DESC
                 LIMIT 1 OFFSET {offset}
             """
@@ -100,10 +101,7 @@ class MatchingTableDisplay:
                 JOIN
                     job_listings jl ON gi.job_id = jl.id
                 WHERE
-                    json_valid(gi.answer) = 1
-                    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
-                    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
-                    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                    {self.good_match_filters}
                 ORDER BY jl.id DESC
                 LIMIT {self.rows_per_page} OFFSET {offset}
             """
