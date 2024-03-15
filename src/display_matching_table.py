@@ -30,12 +30,10 @@ class MatchingTableDisplay:
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
             cur.execute(f"""
-                SELECT COUNT(*) FROM (
-                    SELECT gi.job_id
-                    FROM gpt_interactions gi
-                    JOIN job_listings jl ON gi.job_id = jl.id
-                    WHERE {self.good_match_filters}
-                )
+                SELECT COUNT(gi.job_id)
+                FROM gpt_interactions gi
+                JOIN job_listings jl ON gi.job_id = jl.id
+                WHERE {self.good_match_filters}
             """)
             total_entries = cur.fetchone()[0]
             conn.close()

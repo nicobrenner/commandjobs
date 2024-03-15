@@ -27,6 +27,8 @@ Note: If you want to add another source of job listings, [go to this issue](http
 ## Updates
 
 * Building in public:
+    * ❤️  If you want to contribute to this project and want to take a crack at writing tests for it, it would be amazing! 🤗 Here's a ticket to write a new test, and a walk-through of the current test code: [Request to create: Test displaying the resume text](https://github.com/nicobrenner/commandjobs/issues/48) 🙏🏼
+
     * Here's a little bit of the internals of the application. Very high level overview of the features as well as the database. If you want to see more, or would like a deeper explanation, please create an Issue, thank you
 
         * [![Command Jobs Internals](https://cdn.loom.com/sessions/thumbnails/cf1ad06f82a344f18e3e5a569857d60b-with-play.gif)](https://www.loom.com/share/cf1ad06f82a344f18e3e5a569857d60b)
@@ -196,30 +198,28 @@ To exit the application, press `q`
 
 3. Modify the query with filters for matching jobs.
 
-    In the file `src/display_matching_table.py`, the method `__init__` has a variable with the following SQL query:
+    In the file `src/display_matching_table.py`, the method `__init__` has a variable (`self.good_match_filters`) with the following SQL conditions:
 
-    ```python3
-        self.good_match_filters = '''
-            json_valid(gi.answer) = 1
-            AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
-            AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
-            AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
-        '''
+    ```sql
+    json_valid(gi.answer) = 1
+    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
     ```
 
-    There are 3 conditions that determine what is a good match:
+    These 3 conditions represent the default criteria for filtering AI-found matches. Below is the breakdown of the 3 default requirements for a good match:
 
-    1. That the AI found the listing good for the resume and preferences
+    1. The AI determined the listing a good match for the resume and preferences
         ```sql
         AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
         ```
 
-    2. That they are hiring remote
+    2. The role is, or can be, remote
         ```sql
         AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
         ```
     
-    3. And that they are hiring in the US (the value can be either Yes or NULL or '')
+    3. The role is hiring in the US (the value can be either Yes or NULL or '', so the condition checks that the field `'$.hiring_in_us'` is not `'No'`)
         ```sql
         AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
         ```
@@ -227,15 +227,13 @@ To exit the application, press `q`
     Note: the database is a sqlite3 database, so you can also just open it `sqlite3 job_listings.db` and then try out a query like the one below, and then experiment to see what you find. Regardless of filtering, all the answers and prompts should be stored in the `gpt_interactions` table (checkout the latest update video about the internals):
 
     ```sql
-    SELECT COUNT(*) FROM (
-                    SELECT gi.job_id
-                    FROM gpt_interactions gi
-                    JOIN job_listings jl ON gi.job_id = jl.id
-                    WHERE json_valid(gi.answer) = 1
-                    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
-                    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
-                    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
-                )
+    SELECT COUNT(gi.job_id)
+        FROM gpt_interactions gi
+        JOIN job_listings jl ON gi.job_id = jl.id
+    WHERE json_valid(gi.answer) = 1
+        AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+        AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+        AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
     ```
 
     You should adjust that to your preferences and you can mix and match with the questions/answers you want to get from your prompt
@@ -246,7 +244,16 @@ To exit the application, press `q`
 
 ## Contributing
 
-We welcome contributions, especially in improving scrapers and enhancing user experience. If you'd like to help, please file an issue or pull request on [our GitHub repository](https://github.com/nicobrenner/commandjobs/issues).
+Priority
+
+* ❤️  If you want to contribute to this project and want to take a crack at writing tests for it, it would be amazing! 🤗 Here's a ticket to write a new test, and a walk-through of the current test code: [Request to create: Test displaying the resume text](https://github.com/nicobrenner/commandjobs/issues/48) 🙏🏼
+
+We welcome contributions, especially in improving scrapers and enhancing user experience. If you'd like to help, please file an issue or pull request on [our GitHub repository](https://github.com/nicobrenner/commandjobs/issues)
+
+Here's an overview of some of the internals of the app
+
+* [![Command Jobs Internals](https://cdn.loom.com/sessions/thumbnails/cf1ad06f82a344f18e3e5a569857d60b-with-play.gif)](https://www.loom.com/share/cf1ad06f82a344f18e3e5a569857d60b)
+
 
 ## Issues
 
