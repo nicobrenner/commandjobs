@@ -29,6 +29,7 @@ class GPTProcessor:
         self.log(f"Creating tasks for {len(job_listings)} job listings")
         tasks = [self.process_single_listing(job_id, job_text, job_html, resume, update_ui_callback) for job_id, job_text, job_html in job_listings]
         self.log(f"About to 'gather' {len(tasks)} tasks")
+        # Letting the exceptions bubble up to MenuApp
         await asyncio.gather(*tasks)
 
     async def process_single_listing(self, job_id, job_text, job_html, resume, update_ui_callback):
@@ -38,13 +39,10 @@ class GPTProcessor:
             raise ValueError("Prompt is None or empty, skipping GPT request.")
         
         answer_dict = {}
+        # Letting bubble up the potential exceptions from
+        # the two lines below, up to process_job_listings_with_gpt
         answer = await self.get_gpt_response(prompt)
-        
-        try:
-            self.db_manager.save_gpt_interaction(job_id, prompt, answer)
-        except Exception as e:
-            update_ui_callback(f"Failed to process listings with GPT: {str(e)}")
-            self.log(f"Failed to process listings with GPT: {str(e)}")
+        self.db_manager.save_gpt_interaction(job_id, prompt, answer)  
             
         # Attempt to load the JSON string into a Python dictionary
         try:
@@ -107,5 +105,6 @@ class GPTProcessor:
             messages=[{"role": "user", "content": prompt}],
             model=os.getenv('OPENAI_GPT_MODEL'),
         )
+        self.log(f"response.choices: {response.choices}")
         return response.choices[0].message.content
 
