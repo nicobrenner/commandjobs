@@ -29,17 +29,11 @@ class MenuApp:
         )
         for required_value in required_values:
             if not os.getenv(required_value):
-                print(
-                    "Failed to initialize the application. The following values are required to be "
-                    "set in a .env file:",
-                    *required_values,
-                    sep="\n",
-                )
-                print(
-                    "If you don't have an OpenAI key, visit openai.com to obtain one."
-                )
-                print("See README.md for more configuration options.")
-                raise ValueError(f"{required_value} is not set; exiting.")
+                error_message = f'''
+                    {required_value} env variable is not set; Please check the documentation at
+                    https://github.com/nicobrenner/commandjobs?tab=readme-ov-file#configuration
+                    '''
+                raise ValueError(error_message)
 
         self.scraping_done_event = threading.Event()  # Event to signal scraping completion
         self.logger = logger
@@ -75,15 +69,25 @@ class MenuApp:
         self.current_row = 0
         self.display_splash_screen()
         self.run()
-        
+    
     async def process_with_gpt(self):
-        try:           
-            self.logger.debug("Calling: self.gpt_processor.process_job_listings_with_gpt")
+        exit_message = 'Processing completed successfully'
+        try:
+            self.logger.debug('Calling: self.gpt_processor.process_job_listings_with_gpt')
             await self.gpt_processor.process_job_listings_with_gpt(self.resume_path, update_ui_callback=self.update_status_bar)
         except Exception as e:
             self.logger.exception("Failed to process listings with GPT: %s", str(e))
+            exit_message = f'Failed to process listings with GPT: {str(e)}'
         finally:
-            self.processed_listings_count = self.db_manager.fetch_processed_listings_count()
+            new_count = self.table_display.fetch_total_entries()
+            if new_count > self.total_ai_job_recommendations:
+                count_diff = new_count - self.total_ai_job_recommendations
+                exit_message = f'Processing completed successfully. {count_diff} new matches found ({new_count} total)'
+            else:
+                exit_message = f'Processing completed successfully. No new matches found ({new_count} total)'
+
+        return exit_message
+    
 
     def read_resume_from_file(self):
         try:
@@ -225,7 +229,7 @@ class MenuApp:
         elif self.current_row == 2:  # Navigate jobs in local db
             draw_table(self.stdscr, self.db_path)
         elif self.current_row == 3:  # "Process job listings with GPT" option
-            asyncio.run(self.process_with_gpt())
+            exit_message = asyncio.run(self.process_with_gpt())
         elif self.current_row == 4:  # Index of the new menu option
             self.table_display.draw_table()
         self.stdscr.clear()

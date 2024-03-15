@@ -27,6 +27,10 @@ Note: If you want to add another source of job listings, [go to this issue](http
 ## Updates
 
 * Building in public:
+    * Here's a little bit of the internals of the application. Very high level overview of the features as well as the database. If you want to see more, or would like a deeper explanation, please create an Issue, thank you
+
+        * [![Command Jobs Internals](https://cdn.loom.com/sessions/thumbnails/cf1ad06f82a344f18e3e5a569857d60b-with-play.gif)](https://www.loom.com/share/cf1ad06f82a344f18e3e5a569857d60b)
+
     * Just wrote the first test! 😅 And it's in no small part thanks to Agentic's [Glide](https://glide.agenticlabs.com/task/IqHd0RV), which they recently launched ([see announcement here](https://news.ycombinator.com/item?id=39682183)). I was about to switch from ncurses to [python-prompt-toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit), and failing that from python to Go, so I could build Command Jobs using [Bubble Tea](https://github.com/charmbracelet/bubbletea) 🤩😍🤤
 
         * [![First test with Glide](https://cdn.loom.com/sessions/thumbnails/afd0733ac8dd477cbeea63c8ea6cb363-with-play.gif)](https://www.loom.com/share/afd0733ac8dd477cbeea63c8ea6cb363)
@@ -134,7 +138,7 @@ To exit the application, press `q`
 
 2. Install the dependencies:
 
-    - `pip install -r requirements.txt`
+    - `pip install -r config/requirements.txt`
 
 3. Run the application:
 
@@ -190,7 +194,53 @@ To exit the application, press `q`
         COMMANDJOBS_OUTPUT_FORMAT="{\n \"small_summary\": \"Wine and Open Source developers for C-language systems programming\",\n \"company_name\": \"CodeWeavers\",\n \"available_positions\": [\n {\n \"position\": \"Wine and General Open Source Developers\",\n \"link\": \"https://www.codeweavers.com/about/jobs\"\n }\n ],\n \"tech_stack_description\": \"C-language systems programming\",\n \"use_rails\": \"No\",\n \"use_python\": \"No\",\n \"remote_positions\": \"Yes\",\n \"hiring_in_us\": \"Yes\",\n \"how_to_apply\": \"Apply through our website, here is the link: https://www.codeweavers.com/about/jobs\",\n \"back_ground_with_priority\": null,\n \"fit_for_resume\": \"No\",\n \"fit_justification\": \"The position is for Wine and Open Source developers, neither of which the resume has experience with. The job is remote in the US\"\n }"
         ```
 
-3. Increase the limit of listings to check per batch
+3. Modify the query with filters for matching jobs.
+
+    In the file `src/display_matching_table.py`, the method `__init__` has a variable with the following SQL query:
+
+    ```python3
+        self.good_match_filters = '''
+            json_valid(gi.answer) = 1
+            AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+            AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+            AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+        '''
+    ```
+
+    There are 3 conditions that determine what is a good match:
+
+    1. That the AI found the listing good for the resume and preferences
+        ```sql
+        AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+        ```
+
+    2. That they are hiring remote
+        ```sql
+        AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+        ```
+    
+    3. And that they are hiring in the US (the value can be either Yes or NULL or '')
+        ```sql
+        AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+        ```
+
+    Note: the database is a sqlite3 database, so you can also just open it `sqlite3 job_listings.db` and then try out a query like the one below, and then experiment to see what you find. Regardless of filtering, all the answers and prompts should be stored in the `gpt_interactions` table (checkout the latest update video about the internals):
+
+    ```sql
+    SELECT COUNT(*) FROM (
+                    SELECT gi.job_id
+                    FROM gpt_interactions gi
+                    JOIN job_listings jl ON gi.job_id = jl.id
+                    WHERE json_valid(gi.answer) = 1
+                    AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
+                    AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
+                    AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+                )
+    ```
+
+    You should adjust that to your preferences and you can mix and match with the questions/answers you want to get from your prompt
+
+4. Increase the limit of listings to check per batch
 
     The option `COMMANDJOBS_LISTINGS_PER_BATCH` (which should be in your `.env` file, see `sample.env`) determines how many listings are processed each time the menu option "Find best matches with AI" is executed. If you are using the default of 10, it means that every time you run the option "Find best matches", Command Jobs will make 10 requests to `gpt`. Once you trust the app, I recommend setting the limit to 500, so that the app can process all scraped listings in one go
 
