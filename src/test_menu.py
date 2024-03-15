@@ -16,9 +16,9 @@ class TestManageResume(unittest.TestCase):
         # Mock stdscr object
         mock_stdscr = MagicMock()
         mock_curses.initscr.return_value = mock_stdscr
-        mock_stdscr.getmaxyx.return_value = (200, 200)  # Example values for a terminal size
-        
-        # Mock user input sequence for getch and get_wch
+        mock_stdscr.getmaxyx.return_value = (100, 40)  # Example values for a terminal size
+
+        # Use config/base_resume.sample as the test resume        
         test_resume_text = ''
         with open('config/base_resume.sample', 'r') as file:
             test_resume_text = file.read()
@@ -29,9 +29,7 @@ class TestManageResume(unittest.TestCase):
         if os.path.exists(temp_test_resume_path):
             os.remove(temp_test_resume_path)
         
-        # Presses Enter (10) to go into Paste Resume option
-        mock_stdscr.getch.side_effect = [10]
-        
+        # Mock user input sequence for getch and get_wch        
         # And then paste the resume text + Esc ('\x1b'), to save the resume
         mock_stdscr.get_wch.side_effect = list(test_resume_text) + ['\x1b']
         
