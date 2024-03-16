@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  commandjobs1:
+    image: commandjobs1
+    build:
+      context: .
+      dockerfile: ./Dockerfile
