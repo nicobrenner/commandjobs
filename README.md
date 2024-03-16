@@ -29,6 +29,10 @@ Note: If you want to add another source of job listings, [go to this issue](http
 * Building in public:
     * ❤️  If you want to contribute to this project and want to take a crack at writing tests for it, it would be amazing! 🤗 Here's a ticket to write a new test, and a walk-through of the current test code: [Request to create: Test displaying the resume text](https://github.com/nicobrenner/commandjobs/issues/48) 🙏🏼
 
+    * Video walkthrough, from `git clone` all the way to finding the best matches
+
+        * [![Command Jobs Walkthrough](https://cdn.loom.com/sessions/thumbnails/8034361163004b3e95ada50c91da0143-with-play.gif)](https://www.loom.com/share/8034361163004b3e95ada50c91da0143)
+    
     * Here's a little bit of the internals of the application. Very high level overview of the features as well as the database. If you want to see more, or would like a deeper explanation, please create an Issue, thank you
 
         * [![Command Jobs Internals](https://cdn.loom.com/sessions/thumbnails/cf1ad06f82a344f18e3e5a569857d60b-with-play.gif)](https://www.loom.com/share/cf1ad06f82a344f18e3e5a569857d60b)
@@ -111,6 +115,10 @@ To exit the application, press `q`
 
 ## Quick Start
 
+Video walkthrough, from `git clone` all the way to finding the best matches
+* [![Command Jobs Walkthrough](https://cdn.loom.com/sessions/thumbnails/8034361163004b3e95ada50c91da0143-with-play.gif)](https://www.loom.com/share/8034361163004b3e95ada50c91da0143)
+
+Below is the step by step
 
 * Clone the repository:
 
@@ -130,21 +138,20 @@ To exit the application, press `q`
         - `docker-compose -f docker/docker-compose.yml run app`
 
 
-### Running Directly via Python in a Virtual Environment (if you don't want to use Docker)
+* (if you don't want to use Docker) Run with Python in a Virtual Environment
 
+    1. Set up a Python virtual environment and activate it:
 
-1. Set up a Python virtual environment and activate it:
+        - `python3 -m venv venv`
+        - `source venv/bin/activate`
 
-    - `python3 -m venv venv`
-    - `source venv/bin/activate`
+    2. Install the dependencies:
 
-2. Install the dependencies:
+        - `pip install -r config/requirements.txt`
 
-    - `pip install -r config/requirements.txt`
+    3. Run the application (make sure you've setup your OpenAI API key in your `.env` file - see [Configuration](#configuration) section below):
 
-3. Run the application:
-
-    - `python src/menu.py`
+        - `python src/menu.py`
 
 
 
@@ -171,7 +178,7 @@ To exit the application, press `q`
 
     If you don't have an OpenAI API key, [follow these instructions](https://openai.com/blog/openai-api) to obtain one.
 
-2. Modify the prompt so that it matches your preferences. The prompt has #X sections:
+2. Modify the prompt so that it matches your preferences. The prompt has 5 sections:
 
     * `COMMANDJOBS_ROLE`: list the roles that you are looking for
         ```
