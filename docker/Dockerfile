@@ -1,15 +1,23 @@
-# Use an official Python runtime as a parent image
-FROM python:3.12
+# For more information, please refer to https://aka.ms/vscode-docker-python
+FROM python:3.12-slim
 
-# Copy the current directory contents into the container at /app
-COPY . /commandjobs
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Set the working directory in the container
-WORKDIR /commandjobs
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
 
-# Install any needed packages specified in requirements.txt
-RUN pip3 install --no-cache-dir -r config/requirements.txt
+# Install pip requirements
+COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
 
-# Run menu.py when the container launches
-CMD ["python3", "src/menu.py"]
+WORKDIR /app
+COPY . /app
 
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+USER appuser
+
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["python", "src\test_menu.py"]
