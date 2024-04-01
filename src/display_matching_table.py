@@ -58,7 +58,8 @@ class MatchingTableDisplay:
                     json_extract(gi.answer, '$.remote_positions') AS remote_positions,
                     json_extract(gi.answer, '$.hiring_in_us') AS hiring_in_us,
                     gi.job_id,
-                    jl.original_text
+                    jl.original_text,
+                    jl.external_id
                 FROM
                     gpt_interactions gi
                 JOIN
@@ -230,12 +231,9 @@ class MatchingTableDisplay:
                 content_width = min(76, max_x)
                 start_col = max(0, (max_x - content_width) // 2)  # Calculate start position for centered text
 
-                # Helper function to wrap text within content width and determine text placement
-                def wrap_text(text, width):
-                    return textwrap.wrap(text, width=width)
-
                 y_offset = 1  # Start from the second row for better visibility
                 for idx, detail in enumerate([job[0], job[1], job[4], job[5], job[9]]):
+                    self.log(f'{idx} {detail}')
                     header = ["Company", "Position", "Why it's a good fit", "How to Apply", "Job Description"][idx]
                     
                     if header == "Position":
@@ -246,19 +244,30 @@ class MatchingTableDisplay:
                             detail = "Invalid data"
 
                     # Calculate the position for left-aligned headers within the content area
-                    header_lines = wrap_text(header, content_width)
-                    detail_lines = wrap_text(detail, content_width)
+                    header_lines = textwrap.wrap(header, content_width)
 
                     # Header with background
                     self.stdscr.attron(curses.color_pair(4))
-                    for line in header_lines:
-                        header_start_col = start_col  # Align left within the content width
-                        self.stdscr.addstr(y_offset, header_start_col - 2, "  " + line + "          ")
-                        y_offset += 1
+                    header_start_col = start_col  # Align left within the content width
+                    header_line = f' {header_lines[0]}          '
+                    self.stdscr.addstr(y_offset, header_start_col - 2, header_line)
+                    header_width = len(header_line)
                     y_offset += 1
                     self.stdscr.attroff(curses.color_pair(4))
+                    if header == "Job Description":
+                        y_offset -= 1
+                        link_lines = textwrap.wrap(job[10], content_width)
+                        for idx, line in enumerate(link_lines):
+                            start_on = start_col
+                            if idx == 0:
+                                start_on += header_width + 1
+                            # Underline the text of the link
+                            self.stdscr.addstr(y_offset, start_on, line, curses.A_UNDERLINE)
+                            y_offset += 1
+                    y_offset += 1
                     
                     # Detail text
+                    detail_lines = textwrap.wrap(detail, content_width)
                     for line in detail_lines:
                         if y_offset < max_y - 1:  # Check to avoid writing beyond the screen
                             detail_start_col = max(start_col, (max_x - len(line)) // 2)  # Center detail text

@@ -169,3 +169,6 @@ cython_debug/
 # Ignore user-generated files
 base_resume.txt
 job_listings.db
+
+# Ignore vscode configuration
+.vscode/
