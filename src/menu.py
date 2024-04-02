@@ -45,7 +45,7 @@ class MenuApp:
         self.resume_path = os.getenv('BASE_RESUME_PATH')
         self.table_display = MatchingTableDisplay(self.stdscr, self.db_path)
         self.total_ai_job_recommendations = self.table_display.fetch_total_entries()
-        self.processed_listings_count = self.db_manager.fetch_processed_listings_count()
+        self.update_processed_listings_count()
         self.total_listings = self.get_total_listings()
         env_limit = 0 if os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH') is None else os.getenv('COMMANDJOBS_LISTINGS_PER_BATCH')
         self.listings_per_request = max(int(env_limit), 10)
@@ -70,6 +70,9 @@ class MenuApp:
         self.display_splash_screen()
         self.run()
     
+    def update_processed_listings_count(self):
+        self.processed_listings_count = self.db_manager.fetch_processed_listings_count()
+
     async def process_with_gpt(self):
         exit_message = 'Processing completed successfully'
         try:
@@ -188,9 +191,10 @@ class MenuApp:
             exit()
 
     def update_menu_items(self):
-        # Update the total listings count
+        # Update the total and processed listings count
         self.total_listings = self.get_total_listings()
         self.total_ai_job_recommendations = self.table_display.fetch_total_entries()
+        self.update_processed_listings_count()
         
         # Update the resume option
         resume_menu = "📄 Create resume (just paste it here once)"
