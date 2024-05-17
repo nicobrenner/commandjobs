@@ -46,30 +46,52 @@ def get_job_links(company_url):
             job_link = job['show_path']
             job_links.append(job_link)
     
-    print(f"Company {company_url} has {len(job_links)} job links:")
-    for link in job_links:
-        print(link)
-    
     return job_links
 
 
 def get_job_details(job_url):
     response = requests.get(job_url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    
-    # Adjust the selector based on inspection
-    job_description_section = soup.select_one('div.job-description')
-    if job_description_section:
-        original_text = job_description_section.get_text(strip=True)[:20] + '...'
-        original_html = str(job_description_section)[:20] + '...'
-        external_id = job_url.split('/')[-1]
-        
-        return {
-            'original_text': original_text,
-            'original_html': original_html,
-            'source': job_url,
-            'external_id': external_id
-        }
+
+    # Find the "About the role" section and extract content until "How you'll contribute"
+    about_section = soup.find(string="About the role")
+    if about_section:
+        # Find the parent element of "About the role"
+        about_div = about_section.find_parent('div')
+        if about_div:
+            # Extract content between "About the role" and "How you'll contribute"
+            extracted_content = []
+            for sibling in about_div.next_siblings:
+                if sibling.name == 'div' and sibling.find(string="How you'll contribute"):
+                    break
+                extracted_content.append(str(sibling))
+
+            # Join the extracted content
+            extracted_content_str = ''.join(extracted_content).strip()
+
+            # Get original text and HTML
+            original_text = BeautifulSoup(extracted_content_str, 'html.parser').get_text(strip=True)
+            original_html = extracted_content_str[:20] + '...'
+
+            # Extract external ID from job URL
+            external_id = job_url.split('/')[-1]
+
+            source = "Work at a startup"
+            print("original text: ", original_text)
+            print("original html: ", original_html)
+            print("source : ", source)
+            print("external_id: ", external_id)
+
+            return {
+                'original_text': original_text,
+                'original_html': original_html,
+                'source': source,
+                'external_id': external_id
+            }
+        else:
+            print(f"No parent element found for 'About the role' in {job_url}")
+    else:
+        print(f"'About the role' section not found in {job_url}")
     return None
 
 def scrape_jobs(main_page_url):
@@ -77,11 +99,20 @@ def scrape_jobs(main_page_url):
     company_links = get_company_links(main_page_url)
     
     for company_link in company_links:
+        print(f"Processing company: {company_link}")
         job_links = get_job_links(company_link)
-        
+        print(f"Found {len(job_links)} job links for company {company_link}")
+        for job_link in job_links:
+            print(f"Job link: {job_link}")
+            job_details = get_job_details(job_link)
+            if job_details:
+                jobs_list.append(job_details)
     
     return jobs_list
 
 main_page_url = 'https://www.workatastartup.com/jobs'
 jobs_list = scrape_jobs(main_page_url)
 
+#print("\nScraped Jobs:")
+#for job in jobs_list:
+#    print(job)
