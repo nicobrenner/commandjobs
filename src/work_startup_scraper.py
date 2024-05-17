@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import json
 
 base_url = 'https://www.workatastartup.com'
 
@@ -19,10 +20,38 @@ def get_company_links(main_page_url):
 
 
 def get_job_links(company_url):
+
+    
+    # Fetch the HTML content from the URL
     response = requests.get(company_url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    job_links = [base_url + a['href'] for a in soup.select('a.job-link')]
+
+    # Find all elements with a data-page attribute
+    data_page_elements = soup.find_all(attrs={"data-page": True})
+
+    # Initialize a list to store matching links
+    job_links = []
+
+    # Find the div with the data-page attribute
+    div = soup.find('div', {'data-page': True})
+    if div:
+        # Extract the JSON-like content from the data-page attribute
+        data_page_content = div['data-page']
+        
+        # Parse the JSON content
+        data = json.loads(data_page_content)
+        
+        # Extract job links
+        for job in data['props']['rawCompany']['jobs']:
+            job_link = job['show_path']
+            job_links.append(job_link)
+    
+    print(f"Company {company_url} has {len(job_links)} job links:")
+    for link in job_links:
+        print(link)
+    
     return job_links
+
 
 def get_job_details(job_url):
     response = requests.get(job_url)
@@ -47,20 +76,12 @@ def scrape_jobs(main_page_url):
     jobs_list = []
     company_links = get_company_links(main_page_url)
     
-    
     for company_link in company_links:
-        print(company_link)
-        print("-------------------------------")
-    #   job_links = get_job_links(company_link)
-    #    for job_link in job_links:
-    #        job_details = get_job_details(job_link)
-    #       if job_details:
-    #           jobs_list.append(job_details)
+        job_links = get_job_links(company_link)
+        
     
     return jobs_list
 
 main_page_url = 'https://www.workatastartup.com/jobs'
 jobs_list = scrape_jobs(main_page_url)
 
-for job in jobs_list:
-    print(job)

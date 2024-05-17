@@ -1,0 +1,47 @@
+HTML content preview of https://www.workatastartup.com/companies/eight-sleep (first 50 chars):
+<!DOCTYPE html><html lang="en"><head><!-- Amplitud
+<a href="/" title="Work at a Startup | Y Combinator"><img alt="Y Combinator" src="https://bookface-static.ycombinator.com/assets/ycdc/ycombinator-logo-37cf030fbc255fc71d19aa21bd5b32076aa206e8fbd0121c9247db2adcbd7851.png"/></a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/">Work at a Startup</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/jobs">Startup Jobs</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/internships">Internships</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/events">Upcoming Events</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/about">How it Works</a>
+<a class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-lg font-medium rounded shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" href="https://account.ycombinator.com/authenticate?continue=https%3A%2F%2Fwww.workatastartup.com%2F">Log In ›</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/">Work at a Startup</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/jobs">Startup Jobs</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/internships">Internships</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/events">Upcoming Events</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="/about">How it Works</a>
+<a class="text-center border-t py-2 border-gray-300 block sm:p-0 sm:border-0 sm:inline sm:text-left sm:mr-5 hover:text-blue-500" href="https://account.ycombinator.com/authenticate?continue=https%3A%2F%2Fwww.workatastartup.com%2F">Log In</a>
+<a class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-lg font-medium rounded shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500" href="https://account.ycombinator.com/authenticate?continue=https%3A%2F%2Fwww.workatastartup.com%2Fapplication&amp;defaults%5BsignUpActive%5D=true" onclick="createProfileClick()">Sign up to see more  ›</a>
+<a href="/" title="Work at a Startup | Y Combinator"><img alt="Y Combinator" src="https://bookface-static.ycombinator.com/assets/ycdc/ycombinator-logo-37cf030fbc255fc71d19aa21bd5b32076aa206e8fbd0121c9247db2adcbd7851.png"/></a>
+<a href="/jobs">Jobs</a>
+<a href="/internships">Internships</a>
+<a href="/events">Events</a>
+<a href="/about">How it works</a>
+<a href="/application">Sign in</a>
+<a href="https://www.ycombinator.com/about/" target="_target">About YC</a>
+<a href="https://www.ycombinator.com/press/" target="_target">Press</a>
+<a href="https://www.ycombinator.com/legal/" target="_target">Privacy &amp; Terms</a>
+<a href="/cdn-cgi/l/email-protection#74031b061f15001507001506000104340d171b19161d1a15001b065a171b19" target="_target">Contact</a>
+<a href="/jobs/l/software-engineer">Software Engineer Jobs</a>
+<a href="/jobs/l/designer">Design &amp; UI/UX Jobs</a>
+<a href="/jobs/l/product-manager">Product Manager Jobs</a>
+<a href="/jobs/l/sales-manager">Sales Jobs</a>
+<a href="/jobs/l/marketing">Marketing Jobs</a>
+<a href="/jobs/l/support">Support Jobs</a>
+<a href="/jobs/l/operations">Operations Jobs</a>
+<a href="/jobs/san-francisco/software-engineer">Software Engineer Jobs in San Francisco</a>
+<a href="/jobs/san-francisco/product-manager">Product Manager Jobs in San Francisco</a>
+<a href="/jobs/new-york/software-engineer">Software Engineer Jobs in New York</a>
+<a href="/jobs/new-york/product-manager">Product Manager Jobs in New York</a>
+<a href="/jobs/los-angeles/software-engineer">Software Engineer Jobs in Los Angeles</a>
+<a href="/jobs/los-angeles/product-manager">Product Manager Jobs in Los Angeles</a>
+<a href="/jobs/r/software-engineer">Remote Software Engineer Jobs</a>
+<a href="/jobs/r/designer">Remote Design &amp; UI/UX Jobs</a>
+<a href="/jobs/r/product-manager">Remote Product Manager Jobs</a>
+<a href="/jobs/r/sales-manager">Remote Sales Jobs</a>
+<a href="/jobs/r/marketing">Remote Marketing Jobs</a>
+<a href="/jobs/r/support">Remote Support Jobs</a>
+<a href="/jobs/r/operations">Remote Operations Jobs</a>
+Company https://www.workatastartup.com/companies/eight-sleep has 0 job links:
