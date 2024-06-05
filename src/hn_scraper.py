@@ -12,7 +12,7 @@ class HNScraper:
     def __init__(self, db_path='job_listings.db'):
         self.db_path = db_path
         # Define the base URL for Ask HN: Who's hiring
-        self.base_url = 'https://news.ycombinator.com/item?id=39894820&p=1'
+        self.base_url = 'https://news.ycombinator.com/item?id=40563283&p=1'
         self.new_entries_count = 0  # Initialize counter for new entries
 
     def save_to_database(self, original_text, original_html, source, external_id):
@@ -40,7 +40,7 @@ class HNScraper:
                     ind_cell = comment.find('td', class_='ind')
                     img = ind_cell.find('img') if ind_cell else None
                     if img and img.get('width') == "0":  # Top-level comment
-                        job_description = comment.find('span', class_='commtext c00')
+                        job_description = comment.find('div', class_='commtext c00')
                         if job_description:
                             original_text = job_description.text
                             original_html = job_description.prettify()
@@ -91,5 +91,5 @@ class HNScraper:
 if __name__ == "__main__":
     db_path = 'job_listings.db'
     scraper = HNScraper(db_path)
-    start_url = 'https://news.ycombinator.com/item?id=39894820&p=1'
+    start_url = 'https://news.ycombinator.com/item?id=40563283&p=1'
     scraper.scrape_hn_jobs(start_url)
