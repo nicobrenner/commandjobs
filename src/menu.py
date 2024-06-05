@@ -14,6 +14,8 @@ import threading
 from queue import Queue
 from dotenv import load_dotenv
 
+from work_startup_scraper import WorkStartupScraper
+
 DB_PATH='job_listings.db'
 
 class MenuApp:
@@ -335,6 +337,14 @@ class MenuApp:
         new_listings_count = result_queue.get()  # This will block until the result is available
         self.update_status_bar(f"Scraping completed {new_listings_count} new listings added")
         self.scraping_done_event.clear()  # Clear the event for the next scraping operation
+
+        # result2_queue = Queue()
+        # self.scraper2 = WorkStartupScraper(self.db_path)  # Initialize the scraper
+        # scraping_thread2 = threading.Thread(target=self.scraper2.scrape_jobs, args=(
+        #     self.stdscr, self.update_status_bar, self.scraping_done_event, result2_queue))
+        self.scraper2 = WorkStartupScraper(self.db_path)
+        self.scraper2.scrape_jobs()
+        
 
     # Despite the name of the method, this currently
     # is not handling scrolling 😅

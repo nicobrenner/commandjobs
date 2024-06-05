@@ -3,132 +3,127 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-base_url = 'https://www.workatastartup.com'
+class WorkStartupScraper:
 
-def get_company_links(main_page_url):
-    response = requests.get(main_page_url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    company_links_set = set()
-    company_links = []
-    
-    for a in soup.select('a[target="company"]'):
-        company_url = a['href']
-        if company_url not in company_links_set:
-            company_links.append(company_url)
-            company_links_set.add(company_url)
-    
-    return company_links
+    def __init__(self, db_path='job_listings.db'):
+        self.db_path = db_path
+        # Define the base URL for Ask HN: Who's hiring
+        self.base_url = 'https://www.workatastartup.com/jobs'
+        self.new_entries_count = 0  # Initialize counter for new entries
 
-
-def get_job_links(company_url):
-
-    
-    # Fetch the HTML content from the URL
-    response = requests.get(company_url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-
-    # Find all elements with a data-page attribute
-    data_page_elements = soup.find_all(attrs={"data-page": True})
-
-    # Initialize a list to store matching links
-    job_links = []
-
-    # Find the div with the data-page attribute
-    div = soup.find('div', {'data-page': True})
-    if div:
-        # Extract the JSON-like content from the data-page attribute
-        data_page_content = div['data-page']
         
-        # Parse the JSON content
-        data = json.loads(data_page_content)
+
+    def get_company_links(self):
+        response = requests.get(self.base_url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        company_links_set = set()
+        company_links = []
         
-        # Extract job links
-        for job in data['props']['rawCompany']['jobs']:
-            job_link = job['show_path']
-            job_links.append(job_link)
-    
-    return job_links
+        for a in soup.select('a[target="company"]'):
+            company_url = a['href']
+            if company_url not in company_links_set:
+                company_links.append(company_url)
+                company_links_set.add(company_url)
+        
+        return company_links
 
 
-def get_job_details(job_url):
-    response = requests.get(job_url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    def get_job_links(self, company_url):
 
-    # Find the "About the role" section and extract content until "How you'll contribute"
-    about_section = soup.find(string="About the role")
-    if about_section:
-        # Find the parent element of "About the role"
-        about_div = about_section.find_parent('div')
-        if about_div:
-            # Extract content between "About the role" and "How you'll contribute"
-            extracted_content = []
-            for sibling in about_div.next_siblings:
-                if sibling.name == 'div' and sibling.find(string="How you'll contribute"):
-                    break
-                extracted_content.append(str(sibling))
+        
+        # Fetch the HTML content from the URL
+        response = requests.get(company_url)
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-            # Join the extracted content
-            extracted_content_str = ''.join(extracted_content).strip()
+        # Find all elements with a data-page attribute
+        data_page_elements = soup.find_all(attrs={"data-page": True})
 
-            # Get original text and HTML
-            original_text = BeautifulSoup(extracted_content_str, 'html.parser').get_text(strip=True)
-            original_html = extracted_content_str[:20] + '...'
+        # Initialize a list to store matching links
+        job_links = []
 
-            # Extract external ID from job URL
-            external_id = job_url.split('/')[-1]
+        # Find the div with the data-page attribute
+        div = soup.find('div', {'data-page': True})
+        if div:
+            # Extract the JSON-like content from the data-page attribute
+            data_page_content = div['data-page']
+            
+            # Parse the JSON content
+            data = json.loads(data_page_content)
+            
+            # Extract job links
+            for job in data['props']['rawCompany']['jobs']:
+                job_link = job['show_path']
+                job_links.append(job_link)
+        
+        return job_links
 
-            source = "Work at a startup"
-            print("original text: ", original_text)
-            print("original html: ", original_html)
-            print("source : ", source)
-            print("external_id: ", external_id)
 
-            return {
-                'original_text': original_text,
-                'original_html': original_html,
-                'source': source,
-                'external_id': external_id
-            }
+    def get_job_details(self, job_url):
+        response = requests.get(job_url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Find the "About the role" section and extract content until "How you'll contribute"
+        about_section = soup.find(string="About the role")
+        if about_section:
+            # Find the parent element of "About the role"
+            about_div = about_section.find_parent('div')
+            if about_div:
+                # Extract content between "About the role" and "How you'll contribute"
+                extracted_content = []
+                for sibling in about_div.next_siblings:
+                    if sibling.name == 'div' and sibling.find(string="How you'll contribute"):
+                        break
+                    extracted_content.append(str(sibling))
+
+                # Join the extracted content
+                extracted_content_str = ''.join(extracted_content).strip()
+
+                # Get original text and HTML
+                original_text = BeautifulSoup(extracted_content_str, 'html.parser').get_text(strip=True)
+                original_html = extracted_content_str
+
+                # Extract external ID from job URL
+                external_id = job_url
+                source = "Work at a startup"
+                
+                return {
+                    'original_text': original_text,
+                    'original_html': original_html,
+                    'source': source,
+                    'external_id': external_id
+                }
+            else:
+                print(f"No parent element found for 'About the role' in {job_url}")
         else:
-            print(f"No parent element found for 'About the role' in {job_url}")
-    else:
-        print(f"'About the role' section not found in {job_url}")
-    return None
+            print(f"'About the role' section not found in {job_url}")
+        return None
 
-def scrape_jobs(main_page_url):
-    jobs_list = []
-    company_links = get_company_links(main_page_url)
-    
-    for company_link in company_links:
-        print(f"Processing company: {company_link}")
-        job_links = get_job_links(company_link)
-        print(f"Found {len(job_links)} job links for company {company_link}")
-        for job_link in job_links:
-            print(f"Job link: {job_link}")
-            job_details = get_job_details(job_link)
-            if job_details:
-                jobs_list.append(job_details)
-    
-    for job in jobs_list:
-        save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
+    def scrape_jobs(self):
+        jobs_list = []
+        company_links = self.get_company_links()
+        
+        for company_link in company_links:
+            job_links = self.get_job_links(company_link)
+            for job_link in job_links:
+                job_details = self.get_job_details(job_link)
+                if job_details:
+                    jobs_list.append(job_details)
+        
+        for job in jobs_list:
+            self.save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
 
 
+    def save_to_database(self, original_text, original_html, source, external_id):
+            """Save a job listing to the SQLite database."""
+            conn = sqlite3.connect(self.db_path)
+            c = conn.cursor()
+            # Use INSERT OR IGNORE to skip existing records with the same external_id
+            c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
+                    (original_text, original_html, source, external_id))
+            conn.commit()
+            conn.close()
+            return c.rowcount > 0 # True if the listing was inserted
 
-def save_to_database(original_text, original_html, source, external_id):
-        """Save a job listing to the SQLite database."""
-        conn = sqlite3.connect('job_listings.db')
-        c = conn.cursor()
-        # Use INSERT OR IGNORE to skip existing records with the same external_id
-        c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
-                  (original_text, original_html, source, external_id))
-        conn.commit()
-        conn.close()
-        return c.rowcount > 0 # True if the listing was inserted
-
-
-main_page_url = 'https://www.workatastartup.com/jobs'
-jobs_list = scrape_jobs(main_page_url)
-
-#print("\nScraped Jobs:")
-#for job in jobs_list:
-#    print(job)
+    #print("\nScraped Jobs:")
+    #for job in jobs_list:
+    #    print(job)
