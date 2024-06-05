@@ -3,6 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
+class ScrapingInterrupt(Exception):
+    pass
+
 class WorkStartupScraper:
 
     def __init__(self, db_path='job_listings.db'):
@@ -85,7 +88,7 @@ class WorkStartupScraper:
                 # Extract external ID from job URL
                 external_id = job_url
                 source = "Work at a startup"
-                
+
                 return {
                     'original_text': original_text,
                     'original_html': original_html,
@@ -98,19 +101,42 @@ class WorkStartupScraper:
             print(f"'About the role' section not found in {job_url}")
         return None
 
-    def scrape_jobs(self):
+    def scrape_jobs(self, stdscr, update_func=None, done_event=None, result_queue=None):
+        """Scrape job listings from Work at a Startup and save them to the database."""
         jobs_list = []
-        company_links = self.get_company_links()
-        
-        for company_link in company_links:
-            job_links = self.get_job_links(company_link)
-            for job_link in job_links:
-                job_details = self.get_job_details(job_link)
-                if job_details:
-                    jobs_list.append(job_details)
-        
-        for job in jobs_list:
-            self.save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
+        update_func(f"Scraping: {self.base_url}")
+        try: 
+            company_links = self.get_company_links()
+            
+            for company_link in company_links:
+                job_links = self.get_job_links(company_link)
+                for job_link in job_links:
+                    job_details = self.get_job_details(job_link)
+                    if job_details:
+                        jobs_list.append(job_details)
+            
+            for job in jobs_list:
+                inserted= self.save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
+                if inserted:
+                    self.new_entries_count += 1
+                if job==jobs_list[-1]:
+                    if done_event:
+                        done_event.set()  # Set the event to signal that scraping is done
+                        result_queue.put(self.new_entries_count)
+
+            
+        except requests.exceptions.Timeout as e:
+            if update_func:
+                update_func("Request timed out. Try again later.")
+            
+        except requests.exceptions.RequestException as e:
+            if update_func:
+                update_func(f"Request failed: {str(e)}")
+
+        # Handle user interrupts
+        except ScrapingInterrupt:
+            if update_func:
+                update_func(f"Scraping interrupted by user. {self.new_entries_count} new listings added")
 
 
     def save_to_database(self, original_text, original_html, source, external_id):
@@ -123,7 +149,3 @@ class WorkStartupScraper:
             conn.commit()
             conn.close()
             return c.rowcount > 0 # True if the listing was inserted
-
-    #print("\nScraped Jobs:")
-    #for job in jobs_list:
-    #    print(job)
