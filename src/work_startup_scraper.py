@@ -1,3 +1,4 @@
+import sqlite3
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -108,7 +109,22 @@ def scrape_jobs(main_page_url):
             if job_details:
                 jobs_list.append(job_details)
     
-    return jobs_list
+    for job in jobs_list:
+        save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
+
+
+
+def save_to_database(original_text, original_html, source, external_id):
+        """Save a job listing to the SQLite database."""
+        conn = sqlite3.connect('job_listings.db')
+        c = conn.cursor()
+        # Use INSERT OR IGNORE to skip existing records with the same external_id
+        c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
+                  (original_text, original_html, source, external_id))
+        conn.commit()
+        conn.close()
+        return c.rowcount > 0 # True if the listing was inserted
+
 
 main_page_url = 'https://www.workatastartup.com/jobs'
 jobs_list = scrape_jobs(main_page_url)
