@@ -1,6 +1,7 @@
 import curses
 import textwrap
 import os
+import time
 from hn_scraper import HNScraper
 from display_table import draw_table
 from database_manager import DatabaseManager
@@ -352,6 +353,8 @@ class MenuApp:
         new_listings_count = result_queue.get()
         self.update_status_bar(f"Scraping of Waas completed {new_listings_count} new listings added")
         self.scraping_done_event.clear()
+        time.sleep(3)
+        self.stdscr.clear()
 
 
     # Despite the name of the method, this currently

@@ -121,8 +121,9 @@ class WorkStartupScraper:
                     self.new_entries_count += 1
                 if job==jobs_list[-1]:
                     if done_event:
-                        done_event.set()  # Set the event to signal that scraping is done
                         result_queue.put(self.new_entries_count)
+                        done_event.set()  # Set the event to signal that scraping is done
+                       
 
             
         except requests.exceptions.Timeout as e:
