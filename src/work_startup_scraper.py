@@ -14,8 +14,6 @@ class WorkStartupScraper:
         self.base_url = 'https://www.workatastartup.com/jobs'
         self.new_entries_count = 0  # Initialize counter for new entries
 
-        
-
     def get_company_links(self):
         response = requests.get(self.base_url)
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -32,7 +30,6 @@ class WorkStartupScraper:
 
 
     def get_job_links(self, company_url):
-
         
         # Fetch the HTML content from the URL
         response = requests.get(company_url)
@@ -123,8 +120,6 @@ class WorkStartupScraper:
                     if done_event:
                         result_queue.put(self.new_entries_count)
                         done_event.set()  # Set the event to signal that scraping is done
-                       
-
             
         except requests.exceptions.Timeout as e:
             if update_func:
