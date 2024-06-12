@@ -104,18 +104,35 @@ class WorkStartupScraper:
         update_func(f"Scraping: {self.base_url}")
         try: 
             company_links = self.get_company_links()
-            
+            count = 0
+            flag1 = False
+            flag2 = False
+            flag3 = False
             for company_link in company_links:
+                count += 1
                 job_links = self.get_job_links(company_link)
                 for job_link in job_links:
                     job_details = self.get_job_details(job_link)
                     if job_details:
                         jobs_list.append(job_details)
+                if update_func:
+                    update_func(f"Scraping: {company_link}")
+                # Updates the progress of the scraping
+                if  count / len(company_links)>= 0.25 and not flag1:
+                    update_func("Scraping: 25% of companies completed")
+                    flag1 = True
+                elif count / len(company_links)>= 0.5 and not flag2:
+                    update_func("Scraping: 50% of companies completed")
+                    flag2 = True
+                elif count / len(company_links)>= 0.75:
+                    update_func("Scraping: 75% of companies completed")
+                    flag3 = True
             
             for job in jobs_list:
                 inserted= self.save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
                 if inserted:
                     self.new_entries_count += 1
+                
                 if job==jobs_list[-1]:
                     if done_event:
                         result_queue.put(self.new_entries_count)
