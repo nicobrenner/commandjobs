@@ -57,6 +57,42 @@ class TestManageResume(unittest.TestCase):
         temp_test_db_path = DB_PATH
         if os.path.exists(temp_test_db_path):
             os.remove(temp_test_db_path)
+    @patch('menu.curses')
+    @patch('menu.os.getenv')
+    def test_displaying_resume(self, mock_getenv, mock_curses):
+        # Mock environment variables
+        mock_getenv.side_effect = lambda x: {'OPENAI_API_KEY': 'test_key', 'BASE_RESUME_PATH': 'temp_test_resume.txt', 'HN_START_URL': 'test_url', 'COMMANDJOBS_LISTINGS_PER_BATCH': '10', 'OPENAI_GPT_MODEL': 'gpt-3.5'}.get(x, None)
+
+        # Mock stdscr object
+        mock_stdscr = MagicMock()
+        mock_curses.initscr.return_value = mock_stdscr
+        mock_stdscr.getmaxyx.return_value = (100, 40)  # Example values for a terminal size
+
+        # Use some test resume text
+        test_resume_text = "This is a test resume text."
+        # Save the test resume text to the temporary resume file
+        with open('temp_test_resume.txt', 'w') as file:
+            file.write(test_resume_text)
+
+        # Mock user input sequence for getch
+        mock_stdscr.getch.side_effect = [ord('q')]  # Press 'q' to exit
+
+        # Initialize Menu with mocked stdscr and logger
+        logger = MagicMock()
+        with patch.object(MenuApp, 'run', return_value=None):
+            menu = MenuApp(mock_stdscr, logger)
+        # Assert that the displayed resume text matches the test resume text
+
+        captured_text = mock_stdscr.addstr.call_args_list[0][0][1]  # Get the captured text from the first call to addstr
+        self.assertEqual(captured_text, test_resume_text)
+
+        # Remove the temporary resume file
+        if os.path.exists('temp_test_resume.txt'):
+            os.remove('temp_test_resume.txt')
+
+
+# Call the method being tested
+menu.manage_resume(mock_stdscr)
 
 if __name__ == '__main__':
     unittest.main()

@@ -175,6 +175,8 @@ class MenuApp:
                 self.stdscr.addstr(y, x, item)
                 self.stdscr.attroff(curses.color_pair(1))
             else:
+                if item =='📄 Create resume (just paste it here once)' and self.read_resume_from_file():
+                    item='📄 Edit resume'
                 self.stdscr.addstr(y, x, item)
         self.stdscr.refresh()
 
@@ -263,7 +265,7 @@ class MenuApp:
             self.stdscr.attroff(curses.color_pair(2))  # Turn off color pair
 
             for i, line in enumerate(lines[offset:offset+max_y-5]):
-                self.stdscr.addstr(i+3, 0, line.strip())
+                self.stdscr.addstr(i+3, 0, line)
             
             key = self.stdscr.getch()
             if key in [ord('q'), ord('Q')]:
