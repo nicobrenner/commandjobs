@@ -1,8 +1,7 @@
 import curses
-import textwrap
 import os
 import time
-from hn_scraper import HNScraper
+from job_scraper.hacker_news.scraper import HNScraper
 from display_table import draw_table
 from database_manager import DatabaseManager
 from display_matching_table import MatchingTableDisplay
