@@ -3,15 +3,14 @@ import sqlite3
 import time
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import TimeoutException
 
 from job_scraper.scraper_selectors.workday_selectors import WorkDaySelectors
-from job_scraper.utils import get_workday_company_urls, get_workday_post_time_range
-from src.work_startup_scraper import WorkStartupScraper
+from job_scraper.utils import get_workday_post_time_range
 
 
 class WorkdayScraper():
