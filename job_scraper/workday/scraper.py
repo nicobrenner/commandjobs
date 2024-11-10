@@ -1,4 +1,3 @@
-import logging
 import sqlite3
 import time
 from selenium import webdriver
@@ -13,20 +12,25 @@ from job_scraper.utils import get_workday_post_time_range, get_workday_company_u
 
 
 class WorkdayScraper:
-    def __init__(self, update_func=None):
-        self.db_path = 'job_listings.db'
-        self.driver = webdriver.Chrome(options=self.get_options_config())
+    def __init__(self, db_path='job_listings.db', update_func=None, done_event=None, result_queue=None):
+        self.db_path = db_path
+        self.driver = webdriver.Chrome(options=self.get_selenium_configs())
         self.one_week_span_text = get_workday_post_time_range()
         self.company_urls = get_workday_company_urls()
+        self.new_entries_count = 0
+        self.done_event = done_event
+        self.result_queue = result_queue
         self.update_func = update_func
         self.job_listings = []
 
     @staticmethod
-    def get_options_config() -> Options:
+    def get_selenium_configs() -> Options:
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--remote-debugging-port=9222")
+        chrome_options.add_argument("--disable-gpu")
         return chrome_options
 
     def save_to_database(self, original_text, original_html, source, external_id):
@@ -57,28 +61,35 @@ class WorkdayScraper:
 
     def save_job_listings_to_db(self):
         for job in self.job_listings:
-            inserted = self.save_to_database(job['original_text'], job['original_html'], job['source'], job['external_id'])
+            # inserted = self.save_to_database(
+            #     job['original_text'],
+            #     job['original_html'],
+            #     job['source'],
+            #     job['external_id']
+            # )
+            inserted = job['external_id']
             if inserted:
                 self.new_entries_count += 1
-        self.job_listings = []
+        if self.done_event:
+            self.result_queue.put(self.new_entries_count)
+            self.done_event.set()
 
-    def scrape(self, stdscr, update_func=None, done_event=None, result_queue=None):
+    def scrape(self):
         total_companies = len(self.company_urls)
-        for idx, company_url in enumerate(self.company_urls, 1):
-            self.update_func(f"Scraping company {idx}/{total_companies}: {company_url}")
+        for company_name, company_url in self.company_urls.items():
             self.driver.get(company_url)
             wait = WebDriverWait(self.driver, 10)
+            self.update_func(f"Scraping {company_name}...")
 
             posted_this_week = True
             while posted_this_week:
                 try:
                     wait.until(EC.presence_of_element_located((By.XPATH, WorkDaySelectors.JOB_LISTING_XPATH)))
                 except TimeoutException:
-                    logging.warning("Job Listing Element not found")
+                    self.update_func("Job Listing Element not found. Try again later")
                     break
 
                 job_elements = self.driver.find_elements(By.XPATH, WorkDaySelectors.JOB_LISTING_XPATH)
-
                 for job_element in job_elements:
                     try:
                         job_title_element = job_element.find_element(By.XPATH, WorkDaySelectors.JOB_TITLE_XPATH)
@@ -96,14 +107,11 @@ class WorkdayScraper:
                             job_description = job_description_element.text
                             job_description_html = job_description_element.get_attribute("innerHTML")
                             self.save_new_job_listing(job_description, job_description_html, job_url, job_id)
-                            self.save_to_database(job_description, job_description_html, job_url, job_id)
                         else:
-                            logging.info("Reached posts older than one week. Stopping!")
-                            self.save_job_listings_to_db()
                             posted_this_week = False
                             break
                     except StaleElementReferenceException:
-                        logging.warning("StaleElementReferenceException encountered. Retrying...")
+                        self.update_func("Encountered an issue while fetching job list. Retrying...")
                         time.sleep(1)
                         continue
 
@@ -116,12 +124,13 @@ class WorkdayScraper:
                     )
                     next_page_button.click()
                 except TimeoutException:
-                    logging.info("Reached end of job listings. Stopping!")
+                    self.update_func("TimeoutException. Please try again later!")
                     break
 
-            progress_percent = (idx / total_companies) * 100
-            self.update_func(f"Progress: {progress_percent:.0f}% - Completed {idx}/{total_companies} companies")
+            progress_percent = (company_name / total_companies) * 100
+            self.update_func(f"Scraping: {progress_percent:.0f}% - Completed.")
 
+        self.save_job_listings_to_db()
         self.update_func("Scraping completed for all companies.")
 
 

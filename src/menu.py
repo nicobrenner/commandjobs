@@ -14,6 +14,7 @@ import threading
 from queue import Queue
 from dotenv import load_dotenv
 
+from job_scraper.workday.scraper import WorkdayScraper
 from work_startup_scraper import WorkStartupScraper
 
 DB_PATH='job_listings.db'
@@ -67,6 +68,7 @@ class MenuApp:
 
         self.menu_items = [resume_menu, "🕸  Scrape \"Ask HN: Who's hiring?\"",
                            "🕸  Scrape \"Work at a Startup jobs\"",
+                            "🕸  Scrape \"Workday\"",
                            db_menu_item, find_best_matches_menu, 
                            ai_recommendations_menu]  # New menu option added
         self.current_row = 0
@@ -235,11 +237,13 @@ class MenuApp:
             self.start_scraping_with_status_updates()
         elif self.current_row == 2:  # Scrape Work at a Startup jobs
             self.start_scraping_WaaS_with_status_updates()
-        elif self.current_row == 3:  # Navigate jobs in local db
+        elif self.current_row == 3:  # Scrape Workday
+            self.start_scraping_WaaS_with_status_updates()
+        elif self.current_row == 4:  # Navigate jobs in local db
             draw_table(self.stdscr, self.db_path)
-        elif self.current_row == 4:  # "Process job listings with GPT" option
+        elif self.current_row == 5:  # "Process job listings with GPT" option
             exit_message = asyncio.run(self.process_with_gpt())
-        elif self.current_row == 5:  # Index of the new menu option
+        elif self.current_row == 6:  # Index of the new menu option
             self.table_display.draw_table()
         self.stdscr.clear()
         self.update_menu_items()
@@ -351,6 +355,18 @@ class MenuApp:
         self.scraping_done_event.wait()
         new_listings_count = result_queue.get()
         self.update_status_bar(f"Scraping of Waas completed {new_listings_count} new listings added")
+        self.scraping_done_event.clear()
+        time.sleep(3)
+        self.stdscr.clear()
+
+    def start_scraping_workday_with_status_updates(self):
+        result_queue= Queue()
+        self.scraper = WorkdayScraper(self.db_path, self.update_status_bar, self.scraping_done_event, result_queue)
+        scraping_thread = threading.Thread(target=self.scraper.scrape)
+        scraping_thread.start()
+        self.scraping_done_event.wait()
+        new_listings_count = result_queue.get()
+        self.update_status_bar(f"Scraping of Workday completed {new_listings_count} new listings added")
         self.scraping_done_event.clear()
         time.sleep(3)
         self.stdscr.clear()

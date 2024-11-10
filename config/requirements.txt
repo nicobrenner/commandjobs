@@ -3,3 +3,4 @@ requests==2.25.1
 openai
 python-dotenv
 windows-curses; sys_platform == 'win32'
+selenium==4.25.0

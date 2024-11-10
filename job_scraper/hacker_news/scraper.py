@@ -1,8 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import sqlite3
-import os
-from queue import Queue
 
 # Define a new exception for interrupting scraping
 class ScrapingInterrupt(Exception):
