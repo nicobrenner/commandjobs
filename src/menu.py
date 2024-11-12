@@ -66,7 +66,8 @@ class MenuApp:
         if self.total_ai_job_recommendations > 0:
             ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
 
-        self.menu_items = [resume_menu, "🕸  Scrape \"Ask HN: Who's hiring?\"",
+        self.menu_items = [resume_menu,
+                           "🕸  Scrape \"Ask HN: Who's hiring?\"",
                            "🕸  Scrape \"Work at a Startup jobs\"",
                             "🕸  Scrape \"Workday\"",
                            db_menu_item, find_best_matches_menu, 
@@ -218,9 +219,9 @@ class MenuApp:
         
         # Update the relevant menu items
         self.menu_items[0] = resume_menu
-        self.menu_items[3] = db_menu_item
-        self.menu_items[4] = find_best_matches_menu
-        self.menu_items[5] = ai_recommendations_menu
+        self.menu_items[4] = db_menu_item
+        self.menu_items[5] = find_best_matches_menu
+        self.menu_items[6] = ai_recommendations_menu
         
         # Redraw the menu to reflect the updated items
         self.draw_menu()
@@ -238,7 +239,7 @@ class MenuApp:
         elif self.current_row == 2:  # Scrape Work at a Startup jobs
             self.start_scraping_WaaS_with_status_updates()
         elif self.current_row == 3:  # Scrape Workday
-            self.start_scraping_WaaS_with_status_updates()
+            self.start_scraping_workday_with_status_updates()
         elif self.current_row == 4:  # Navigate jobs in local db
             draw_table(self.stdscr, self.db_path)
         elif self.current_row == 5:  # "Process job listings with GPT" option
