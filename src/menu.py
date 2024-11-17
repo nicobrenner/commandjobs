@@ -15,7 +15,7 @@ from queue import Queue
 from dotenv import load_dotenv
 
 from job_scraper.workday.scraper import WorkdayScraper
-from work_startup_scraper import WorkStartupScraper
+from job_scraper.waas.work_startup_scraper import WorkStartupScraper
 
 DB_PATH='job_listings.db'
 
