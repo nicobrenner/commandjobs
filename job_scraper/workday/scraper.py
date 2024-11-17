@@ -35,7 +35,6 @@ class WorkdayScraper:
         return chrome_options
 
     def save_to_database(self, original_text, original_html, source, external_id):
-        """Save a job listing to the SQLite database."""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
@@ -62,13 +61,12 @@ class WorkdayScraper:
 
     def save_job_listings_to_db(self):
         for job in self.job_listings:
-            # inserted = self.save_to_database(
-            #     job['original_text'],
-            #     job['original_html'],
-            #     job['source'],
-            #     job['external_id']
-            # )
-            inserted = job['external_id']
+            inserted = self.save_to_database(
+                job['original_text'],
+                job['original_html'],
+                job['source'],
+                job['external_id']
+            )
             if inserted:
                 self.new_entries_count += 1
         if self.done_event:
@@ -76,10 +74,11 @@ class WorkdayScraper:
             self.done_event.set()
 
     def scrape(self):
+        self.update_func(f"Scraping Workday companies:\t{", ".join(self.company_urls.keys())}")
+
         for company_name, company_url in self.company_urls.items():
             self.driver.get(company_url)
             wait = WebDriverWait(self.driver, 10)
-            self.update_func(f"Scraping Workday companies:\t{", ".join(self.company_urls.keys())}")
 
             posted_this_week = True
             while posted_this_week:
@@ -92,7 +91,7 @@ class WorkdayScraper:
                 job_elements = self.driver.find_elements(By.XPATH, WorkDaySelectors.JOB_LISTING_XPATH)
                 for job_element in job_elements:
                     try:
-                        self.update_func(f"*{company_name}* \n {self.driver.current_url}")
+                        self.update_func(f"Scraping {company_name}: {self.driver.current_url}")
                         job_title_element = job_element.find_element(By.XPATH, WorkDaySelectors.JOB_TITLE_XPATH)
                         job_id_element = job_element.find_element(By.XPATH, WorkDaySelectors.JOB_ID_XPATH)
                         job_id = job_id_element.text
@@ -112,15 +111,14 @@ class WorkdayScraper:
                             posted_this_week = False
                             break
                     except StaleElementReferenceException:
-                        self.update_func("Encountered an issue while fetching job list. Retrying...")
-                        time.sleep(1)
+                        continue
 
                 if not posted_this_week:
                     break
 
                 try:
                     next_page_button = wait.until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[@data-uxi-element-id='next']"))
+                        EC.element_to_be_clickable((By.XPATH, WorkDaySelectors.NEXT_PAGE_XPATH))
                     )
                     next_page_button.click()
                 except TimeoutException:

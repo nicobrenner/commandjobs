@@ -7,3 +7,4 @@ class WorkDaySelectors(StrEnum):
     JOB_ID_XPATH = './/ul[@data-automation-id="subtitle"]/li'
     POSTED_ON_XAPTH = './/dd[@class="css-129m7dg"][preceding-sibling::dt[contains(text(),"posted on")]]'
     JOB_DESCRIPTION_XPATH = '//div[@data-automation-id="jobPostingDescription"]'
+    NEXT_PAGE_XPATH = "//button[@data-uxi-element-id='next']"

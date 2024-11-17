@@ -8,7 +8,6 @@ def get_workday_company_urls() -> dict:
     return urls
 
 def get_workday_post_time_range() -> list[str]:
-    return ['posted today']
-    # return ['posted today', 'posted yesterday', 'posted 2 days ago', 'posted 3 days ago',
-    #  'posted 4 days ago', 'posted 5 days ago', 'posted 6 days ago', 'posted 7 days ago']
+    return ['posted today', 'posted yesterday', 'posted 2 days ago', 'posted 3 days ago',
+     'posted 4 days ago', 'posted 5 days ago', 'posted 6 days ago', 'posted 7 days ago']
 

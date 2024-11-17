@@ -32,6 +32,5 @@ def test_job_listing_xpath_present(selenium_driver, company_name, url):
 
     try:
         wait.until(EC.presence_of_element_located((By.XPATH, WorkDaySelectors.JOB_LISTING_XPATH)))
-        print(f"PASS: JOB_LISTING_XPATH found for {company_name}")
     except TimeoutException:
         pytest.fail(f"FAIL: JOB_LISTING_XPATH not found for {company_name}")
