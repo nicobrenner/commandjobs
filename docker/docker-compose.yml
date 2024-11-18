@@ -8,20 +8,24 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    
+
     # Set container name
     container_name: commandjobs
 
     # Set environment variables
     environment:
       - MENU_APP=src/menu.py
+      - PYTHONPATH=/commandjobs
 
     # Mount entire project into docker container under /repo
     volumes:
       - ../:/commandjobs
       - ./docker/docker-entrypoint.sh:/commandjobs/docker-entrypoint.sh
 
+    # Use host network mode (may require changes depending on Docker environment)
     network_mode: host
 
     tty: true  # Allocate a pseudo-TTY
     stdin_open: true  # Keep STDIN open
+
+    working_dir: /commandjobs
