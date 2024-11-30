@@ -2,7 +2,7 @@
 # Docker compose file running Flask app in development (debug) mode
 # https://docs.docker.com/compose/compose-file/
 #
-version: "3.7"
+#version: "3.7"
 services:
   app:
     build:
@@ -22,10 +22,12 @@ services:
       - ../:/commandjobs
       - ./docker/docker-entrypoint.sh:/commandjobs/docker-entrypoint.sh
 
+
     # Use host network mode (may require changes depending on Docker environment)
     network_mode: host
 
-    tty: true  # Allocate a pseudo-TTY
-    stdin_open: true  # Keep STDIN open
+#    tty: true  # Allocate a pseudo-TTY
+#    stdin_open: true  # Keep STDIN open
 
     working_dir: /commandjobs
+    entrypoint: ["sh", "/commandjobs/docker/docker-entrypoint.sh"]
