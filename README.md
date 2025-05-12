@@ -185,14 +185,14 @@ Below is the step by step
     to add your OpenAI API key
     ```
     OPENAI_API_KEY=your_openai_api_key_here
-    OPENAI_GPT_MODEL=gpt-3.5-turbo
+    OPENAI_GPT_MODEL=gpt-4.1-turbo
 
     BASE_RESUME_PATH=base_resume.txt
-    HN_START_URL=https://news.ycombinator.com/item?id=40563283&p=1
+    HN_START_URL=https://news.ycombinator.com/item?id=43858554&p=1
 
     ...
     ```
-    Note: the above HN_START_URL is for April 2024
+    Note: the above HN_START_URL is for May 2025
 
 
     ### Obtaining an OpenAI API Key
