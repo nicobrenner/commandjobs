@@ -44,7 +44,9 @@ Note: If you want to add another source of job listings, [go to this issue](http
 
 
 ## Updates
-
+* Added new scraper for Workday, currently scraping NVIDIA, CROWDSTRIKE, RED HAT and SALESFORCE.
+  * The scraper currently scrapes for all countries on posts no older than a **week** back!
+    
 * Building in public:
     * ❤️  If you want to contribute to this project and want to take a crack at writing tests for it, it would be amazing! 🤗 Here's a ticket to write a new test, and a walk-through of the current test code: [Request to create: Test displaying the resume text](https://github.com/nicobrenner/commandjobs/issues/48) 🙏🏼
 
