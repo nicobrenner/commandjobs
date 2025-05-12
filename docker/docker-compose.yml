@@ -19,7 +19,7 @@ services:
     # Mount entire project into docker container under /repo
     volumes:
       - ../:/commandjobs
-      - ./docker/docker-entrypoint.sh:/commandjobs/docker-entrypoint.sh
+      - ./docker-entrypoint.sh:/commandjobs/docker-entrypoint.sh
 
     network_mode: host
 
