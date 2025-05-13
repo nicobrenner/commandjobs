@@ -182,6 +182,28 @@ class MatchingTableDisplay:
         self.stdscr.attroff(curses.color_pair(5))
         # self.stdscr.addstr(max_y - 1, 0, pagination_info.ljust(max_x))  # Clear to the end of line
 
+        # --- new controls hint bar ---
+        # --- footer line: pagination + controls ---
+        footer_y = max_y - 2
+
+        # 1) Draw pagination (flush-left)
+        pagination = f"Page {self.current_page} of {self.total_pages} ({self.total_entries} great matches for your resume 😁)"
+        self.stdscr.attron(curses.color_pair(5))
+        self.stdscr.addstr(footer_y, 0, pagination.ljust(max_x))
+        self.stdscr.attroff(curses.color_pair(5))
+
+        # 2) Prepare controls text
+        controls_text = "[↑↓] Move  [←→ ] Page  [Enter] View  [d] Discard  [a] Apply  [q] Back to Menu"
+
+        # 3) Clear the next line so no overlap
+        self.stdscr.move(footer_y + 1, 0)
+        self.stdscr.clrtoeol()
+
+        # 4) Draw controls (same left alignment)
+        self.stdscr.attron(curses.color_pair(7))
+        self.stdscr.addstr(footer_y + 1, 0, controls_text[: max_x - 1])
+        self.stdscr.attroff(curses.color_pair(7))
+
         self.stdscr.refresh()
 
 
