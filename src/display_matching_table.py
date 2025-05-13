@@ -19,6 +19,8 @@ class MatchingTableDisplay:
             AND json_extract(gi.answer, '$.fit_for_resume') = 'Yes'
             AND json_extract(gi.answer, '$.remote_positions') = 'Yes'
             AND json_extract(gi.answer, '$.hiring_in_us') <> 'No'
+            AND (jl.discarded IS NULL OR jl.discarded = 0)
+            AND (jl.applied IS NULL OR jl.applied = 0)
         '''
 
     def log(self, message):
@@ -210,8 +212,49 @@ class MatchingTableDisplay:
             elif key in [curses.KEY_ENTER, 10, 13]:
                 self.show_job_detail(self.highlighted_row_index + (self.current_page - 1) * self.rows_per_page)
                 self.draw_page(self.current_page)  # Redraw the table after returning from the detail view
+            elif key == ord('d'):
+                # Discard current job
+                job = self.fetch_job(self.highlighted_row_index + (self.current_page - 1) * self.rows_per_page)
+                if job:
+                    self.discard_listing(job[8])  # job[8] = job_id
+                    self.total_entries = self.fetch_total_entries()
+                    self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
+                    self.highlighted_row_index = 0
+                    self.draw_page(self.current_page)
+            elif key == ord('a'):
+                # Apply to current job
+                job = self.fetch_job(self.highlighted_row_index + (self.current_page - 1) * self.rows_per_page)
+                if job:
+                    self.apply_to_listing(job[8])  # job[8] = job_id
+                    self.total_entries = self.fetch_total_entries()
+                    self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
+                    self.highlighted_row_index = 0
+                    self.draw_page(self.current_page)
             elif key == ord('q'):
                 break  # Exit the table view
+
+    def discard_listing(self, job_id):
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cur = conn.cursor()
+            cur.execute("UPDATE job_listings SET discarded = 1 WHERE id = ?", (job_id,))
+            conn.commit()
+            conn.close()
+            self.log(f"Discarded job {job_id}")
+        except Exception as e:
+            self.log(f"Error discarding job {job_id}: {e}")
+
+    def apply_to_listing(self, job_id):
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cur = conn.cursor()
+            cur.execute("UPDATE job_listings SET applied = 1 WHERE id = ?", (job_id,))
+            conn.commit()
+            conn.close()
+            self.log(f"Applied to job {job_id}")
+        except Exception as e:
+            self.log(f"Error marking job {job_id} as applied: {e}")
+
 
     def show_job_detail(self, job_index):
         self.total_entries = self.fetch_total_entries()  # Get total number of entries for cycling
