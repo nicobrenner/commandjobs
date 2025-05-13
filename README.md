@@ -44,6 +44,9 @@ Note: If you want to add another source of job listings, [go to this issue](http
 
 
 ## Updates
+
+* Optimized docker building and running
+
 * Added new scraper for Workday, currently scraping NVIDIA, CROWDSTRIKE, RED HAT and SALESFORCE.
   * The scraper currently scrapes for all countries on posts no older than a **week** back!
     
@@ -156,7 +159,7 @@ Below is the step by step
 
     2. Run the Docker container (make sure you've setup your OpenAI API key in your `.env` file - see [Configuration](#configuration) section below):
 
-        - `docker-compose -f docker/docker-compose.yml run app`
+        - `docker-compose -f docker/docker-compose.yml run --rm app`
 
 
 * (if you don't want to use Docker) Run with Python in a Virtual Environment
