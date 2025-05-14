@@ -5,6 +5,7 @@ from job_scraper.hacker_news.scraper import HNScraper
 from display_table import draw_table
 from database_manager import DatabaseManager
 from display_matching_table import MatchingTableDisplay
+from display_applications import ApplicationsDisplay
 from gpt_processor import GPTProcessor
 
 import asyncio
@@ -71,7 +72,8 @@ class MenuApp:
                            "🕸  Scrape \"Work at a Startup jobs\"",
                             "🕸  Scrape \"Workday\"",
                            db_menu_item, find_best_matches_menu,
-                           ai_recommendations_menu]  # New menu option added
+                           ai_recommendations_menu,
+                           "📋 Applications"]
         self.current_row = 0
         self.display_splash_screen()
         self.run()
@@ -246,6 +248,9 @@ class MenuApp:
             exit_message = asyncio.run(self.process_with_gpt())
         elif self.current_row == 6:  # Index of the new menu option
             self.table_display.draw_table()
+        elif self.current_row == 7:           # adjust index if needed
+            self.app_display = ApplicationsDisplay(self.stdscr, self.db_path)
+            self.app_display.draw_board()
         self.stdscr.clear()
         self.update_menu_items()
         if exit_message != '':

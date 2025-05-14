@@ -1,4 +1,4 @@
-# migrations/001_add_discarded_applied.py
+# src/migrations/001_add_discarded_applied.py
 
 import sqlite3
 
