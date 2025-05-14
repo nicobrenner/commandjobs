@@ -36,6 +36,7 @@ class WorkdayScraper:
 
     def save_to_database(self, original_text, original_html, source, external_id):
         conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA journal_mode=WAL;")
         c = conn.cursor()
         c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
                   (original_text, original_html, source, external_id))
