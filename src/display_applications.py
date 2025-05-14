@@ -76,7 +76,7 @@ class ApplicationsDisplay:
     def add_note(self, application_id, job_id):
         """
         Multi-line note entry with visible cursor.
-        Save with Ctrl-S, cancel with Ctrl-D.
+        Save with Ctrl-G, cancel with Ctrl-D.
         """
         # show the cursor
         curses.curs_set(1)
@@ -91,10 +91,10 @@ class ApplicationsDisplay:
         # draw border
         win = curses.newwin(box_h, box_w, start_y, start_x)
         win.box()
-        win.addstr(0, 2, " Enter note (Ctrl-S save  Ctrl-D cancel) ")
+        win.addstr(0, 2, " Enter note (Ctrl-G save  Ctrl-D cancel) ")
         win.refresh()
 
-        # pad for input (taller than box)
+        # pad for input (taller than box to allow scrolling)
         pad_h = box_h * 5
         pad_w = box_w - 2
         pad = curses.newpad(pad_h, pad_w)
@@ -106,51 +106,73 @@ class ApplicationsDisplay:
         saved = False
 
         while True:
-            # redraw border
+            # redraw border & title
             win.box()
             win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
             win.refresh()
 
-            # show pad window
+            # display the pad window
             pad.refresh(pad_row, 0,
                         start_y + 1, start_x + 1,
                         start_y + box_h - 2, start_x + box_w - 2)
 
             ch = self.stdscr.getch()
-            # Ctrl-G = 7 => save
-            if ch == 7:
+            if ch == 7:            # Ctrl-G = save
                 saved = True
                 break
-            # Ctrl-D = 4 => cancel
-            elif ch == 4:
+            elif ch == 4:          # Ctrl-D = cancel
                 saved = False
                 break
             elif ch == curses.KEY_UP and pad_row > 0:
                 pad_row -= 1
-            elif ch == curses.KEY_DOWN and cur_y - pad_row > box_h - 3:
+            elif ch == curses.KEY_DOWN and cur_y - pad_row >= box_h - 2:
                 pad_row += 1
+
             elif ch in (curses.KEY_BACKSPACE, 127):
                 if cur_x > 0:
                     cur_x -= 1
-                    pad.delch(cur_y, cur_x)
+                    try:
+                        pad.delch(cur_y, cur_x)
+                    except curses.error:
+                        pass
                 elif cur_y > 0:
-                    # go up a line
+                    # move up one line
                     cur_y -= 1
                     line = pad.instr(cur_y, 0, pad_w).decode('utf-8').rstrip('\x00')
                     cur_x = len(line)
+
             elif ch in (curses.KEY_ENTER, 10, 13):
-                pad.addch(cur_y, cur_x, ord('\n'))
+                try:
+                    pad.addch(cur_y, cur_x, ord('\n'))
+                except curses.error:
+                    pass
                 cur_y += 1
                 cur_x = 0
+
             elif ch == curses.KEY_LEFT and cur_x > 0:
                 cur_x -= 1
             elif ch == curses.KEY_RIGHT:
                 cur_x += 1
+
             elif 0 <= ch < 256:
-                pad.addch(cur_y, cur_x, ch)
+                # any printable character
+                try:
+                    pad.addch(cur_y, cur_x, ch)
+                except curses.error:
+                    pass
                 cur_x += 1
 
-            # keep cursor mapped in pad
+            # ─── ensure cursor is visible ─────────────────────────────
+            # if cur_y is below the bottom of our pad window, scroll down
+            if cur_y - pad_row > box_h - 3:
+                pad_row = cur_y - (box_h - 3)
+            # if cur_y is above the top of our pad window, scroll up
+            elif cur_y < pad_row:
+                pad_row = cur_y
+            # clamp
+            pad_row = max(0, min(pad_row, pad_h - (box_h - 2)))
+
+            # reposition the curses cursor onto the pad
             real_y = start_y + 1 + (cur_y - pad_row)
             real_x = start_x + 1 + cur_x
             curses.setsyx(real_y, real_x)
@@ -160,7 +182,7 @@ class ApplicationsDisplay:
         curses.curs_set(0)
 
         if not saved:
-            return  # user cancelled with Ctrl-D
+            return  # cancelled
 
         # extract all lines up to cur_y
         lines = []
@@ -171,7 +193,7 @@ class ApplicationsDisplay:
         if not note_text:
             return  # nothing to save
 
-        # finally, persist to DB
+        # persist to DB
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
@@ -315,19 +337,30 @@ class ApplicationsDisplay:
             if apps:
                 application_id, job_id, company, applied_date, status = apps[self.cursor]
 
-                # Notes pane
+                # ─── Notes pane ────────────────────────────────────────────
                 y = base_y
                 self.fetch_notes(application_id)
-                if not self.notes:
-                    hint = "Press [n] to add a note"
-                    self.stdscr.addstr(y, left_w + 2, hint, curses.A_DIM)
-                else:
-                    for note, ts in self.notes[-(h - base_y - 6):]:
-                        line = f"{ts.split(' ')[0]}: {note}"
-                        for wrapped in textwrap.wrap(line, mid_w - 2):
-                            if y < h - 4:
-                                self.stdscr.addstr(y, left_w + 2, wrapped)
-                                y += 1
+                
+                # show as many recent notes as will fit vertically
+                notes_to_show = self.notes[-(h - base_y - 6):]
+                for note, ts in notes_to_show:
+                    # build one logical line per note
+                    full_line = f"{ts.split(' ')[0]}: {note}"
+                    wrapped = textwrap.wrap(full_line, mid_w - 2)
+
+                    # truncate to 2 lines + ellipsis if necessary
+                    if len(wrapped) > 2:
+                        wrapped = wrapped[:2] + ['…']
+
+                    for line in wrapped:
+                        if y < h - 4:
+                            self.stdscr.addstr(y, left_w + 2, line)
+                            y += 1
+
+                # Display notes hint
+                y += 1
+                hint = "Press [n] to add a note"
+                self.stdscr.addstr(y, left_w + 2, hint, curses.A_DIM)
 
                 # Details pane
                 detail = self.fetch_job_detail(job_id)
