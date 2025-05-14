@@ -151,9 +151,13 @@ class MatchingTableDisplay:
                 # Parse JSON for the 'Position' column and extract position titles
                 if key == "Position":
                     try:
-                        positions = json.loads(field)
-                        field = ", ".join(pos["position"] for pos in positions)
-                    except json.JSONDecodeError:
+                        positions = json.loads(field) or []
+                        # keep only those with a real string for "position"
+                        titles = [pos.get("position") for pos in positions
+                                if isinstance(pos.get("position"), str)]
+                        field = ", ".join(titles) if titles else ""
+                    except (json.JSONDecodeError, TypeError):
+                        # JSON was bad, or field was None
                         field = "Invalid data"
                 
                 # This part takes a field content and wraps it in width
@@ -335,10 +339,18 @@ class MatchingTableDisplay:
                     
                     if header == "Position":
                         try:
-                            positions = json.loads(detail)
-                            detail = ", ".join(pos["position"] for pos in positions)
-                        except json.JSONDecodeError:
-                            detail = "Invalid data"
+                            # if detail is None or "null", coerce to empty list
+                            positions = json.loads(detail) or []
+                            # only keep real strings
+                            titles = [
+                                p.get("position")
+                                for p in positions
+                                if isinstance(p.get("position"), str)
+                            ]
+                            detail = ", ".join(titles)
+                        except (json.JSONDecodeError, TypeError):
+                            # fall back to blank if we can’t parse
+                            detail = ""
 
                     # Calculate the position for left-aligned headers within the content area
                     header_lines = textwrap.wrap(header, content_width)
@@ -353,7 +365,8 @@ class MatchingTableDisplay:
                     self.stdscr.attroff(curses.color_pair(4))
                     if header == "Job Description":
                         y_offset -= 1
-                        link_lines = textwrap.wrap(job[10], content_width)
+                        link_text = job[10] if job[10] is not None else ""
+                        link_lines = textwrap.wrap(link_text, content_width)
                         for idx, line in enumerate(link_lines):
                             start_on = start_col
                             if idx == 0:
@@ -364,7 +377,9 @@ class MatchingTableDisplay:
                     y_offset += 1
                     
                     # Detail text
-                    detail_lines = textwrap.wrap(detail, content_width)
+                    # avoid passing None to wrap()
+                    detail_text = detail if detail is not None else ""
+                    detail_lines = textwrap.wrap(detail_text, content_width)
                     for line in detail_lines:
                         if y_offset < max_y - 1:  # Check to avoid writing beyond the screen
                             detail_start_col = max(start_col, (max_x - len(line)) // 2)  # Center detail text
