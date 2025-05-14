@@ -3,6 +3,7 @@ import curses
 import textwrap
 import logging
 import json
+from datetime import date
 
 class MatchingTableDisplay:
     def __init__(self, stdscr, db_path):
@@ -270,7 +271,13 @@ class MatchingTableDisplay:
         try:
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
-            cur.execute("UPDATE job_listings SET applied = 1 WHERE id = ?", (job_id,))
+            today = date.today().isoformat()  # e.g. "2025-05-14"
+            cur.execute("""
+                UPDATE job_listings
+                SET applied = 1,
+                    applied_date = ?
+                WHERE id = ?
+            """, (today, job_id))
             conn.commit()
             conn.close()
             self.log(f"Applied to job {job_id}")
