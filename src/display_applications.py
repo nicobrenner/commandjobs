@@ -1,6 +1,7 @@
 # src/display_applications.py
 
 import curses
+import curses.textpad
 import sqlite3
 import textwrap
 import json
@@ -73,25 +74,109 @@ class ApplicationsDisplay:
         return detail
 
     def add_note(self, application_id, job_id):
-        # prompt
-        curses.echo()
-        prompt_row = curses.LINES - 4
-        self.stdscr.move(prompt_row, 0)
-        self.stdscr.clrtoeol()
-        self.stdscr.addstr(prompt_row, 0, "  New note: ")
-        note = self.stdscr.getstr().decode().strip()
-        curses.noecho()
+        """
+        Multi-line note entry with visible cursor.
+        Save with Ctrl-S, cancel with Ctrl-D.
+        """
+        # show the cursor
+        curses.curs_set(1)
 
-        if not note:
-            return  # nothing to do
+        # screen dimensions
+        h, w = self.stdscr.getmaxyx()
+        box_h = h - 6
+        box_w = w - 8
+        start_y = 3
+        start_x = 4
 
+        # draw border
+        win = curses.newwin(box_h, box_w, start_y, start_x)
+        win.box()
+        win.addstr(0, 2, " Enter note (Ctrl-S save  Ctrl-D cancel) ")
+        win.refresh()
+
+        # pad for input (taller than box)
+        pad_h = box_h * 5
+        pad_w = box_w - 2
+        pad = curses.newpad(pad_h, pad_w)
+        pad.scrollok(True)
+        pad.idlok(True)
+
+        pad_row = 0
+        cur_y, cur_x = 0, 0
+        saved = False
+
+        while True:
+            # redraw border
+            win.box()
+            win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
+            win.refresh()
+
+            # show pad window
+            pad.refresh(pad_row, 0,
+                        start_y + 1, start_x + 1,
+                        start_y + box_h - 2, start_x + box_w - 2)
+
+            ch = self.stdscr.getch()
+            # Ctrl-G = 7 => save
+            if ch == 7:
+                saved = True
+                break
+            # Ctrl-D = 4 => cancel
+            elif ch == 4:
+                saved = False
+                break
+            elif ch == curses.KEY_UP and pad_row > 0:
+                pad_row -= 1
+            elif ch == curses.KEY_DOWN and cur_y - pad_row > box_h - 3:
+                pad_row += 1
+            elif ch in (curses.KEY_BACKSPACE, 127):
+                if cur_x > 0:
+                    cur_x -= 1
+                    pad.delch(cur_y, cur_x)
+                elif cur_y > 0:
+                    # go up a line
+                    cur_y -= 1
+                    line = pad.instr(cur_y, 0, pad_w).decode('utf-8').rstrip('\x00')
+                    cur_x = len(line)
+            elif ch in (curses.KEY_ENTER, 10, 13):
+                pad.addch(cur_y, cur_x, ord('\n'))
+                cur_y += 1
+                cur_x = 0
+            elif ch == curses.KEY_LEFT and cur_x > 0:
+                cur_x -= 1
+            elif ch == curses.KEY_RIGHT:
+                cur_x += 1
+            elif 0 <= ch < 256:
+                pad.addch(cur_y, cur_x, ch)
+                cur_x += 1
+
+            # keep cursor mapped in pad
+            real_y = start_y + 1 + (cur_y - pad_row)
+            real_x = start_x + 1 + cur_x
+            curses.setsyx(real_y, real_x)
+            curses.doupdate()
+
+        # hide the cursor again
+        curses.curs_set(0)
+
+        if not saved:
+            return  # user cancelled with Ctrl-D
+
+        # extract all lines up to cur_y
+        lines = []
+        for y in range(cur_y + 1):
+            raw = pad.instr(y, 0, pad_w).decode('utf-8').rstrip('\x00')
+            lines.append(raw.rstrip())
+        note_text = "\n".join(lines).strip()
+        if not note_text:
+            return  # nothing to save
+
+        # finally, persist to DB
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
 
-        # 1) make sure we have an application row
         if application_id is None:
-            # no application yet, so insert it now
             now = datetime.datetime.utcnow().isoformat()
             cur.execute(
                 "INSERT INTO applications (job_id, status, created_at, updated_at) "
@@ -100,14 +185,13 @@ class ApplicationsDisplay:
             )
             application_id = cur.lastrowid
 
-        # 2) insert the note
         cur.execute(
             "INSERT INTO application_notes (application_id, note) VALUES (?, ?)",
-            (application_id, note)
+            (application_id, note_text)
         )
-
         conn.commit()
         conn.close()
+
 
     def finalize(self, application_id, job_id):
         # 1) prompt
