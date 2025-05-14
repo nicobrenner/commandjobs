@@ -10,7 +10,7 @@ echo ">>> Running database migrations..."
 # Loop through every .py in src/migrations, sorted by filename
 for migration in src/migrations/*.py; do
   echo "----> Applying $(basename "$migration")"
-  python3 "$migration" || echo "Warning: migration $migration exited with error"
+  python3 "$migration"
 done
 
 echo ">>> Launching application..."
