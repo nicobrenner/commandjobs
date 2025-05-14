@@ -270,7 +270,10 @@ class MatchingTableDisplay:
     def apply_to_listing(self, job_id):
         try:
             conn = sqlite3.connect(self.db_path)
+            conn.execute("PRAGMA journal_mode=WAL;")
             cur = conn.cursor()
+
+            # 1) mark the listing itself as applied
             today = date.today().isoformat()  # e.g. "2025-05-14"
             cur.execute("""
                 UPDATE job_listings
@@ -278,9 +281,31 @@ class MatchingTableDisplay:
                     applied_date = ?
                 WHERE id = ?
             """, (today, job_id))
+
+            # 2) upsert into applications
+            #    - if an application already exists, just refresh its timestamps/status
+            #    - otherwise insert a new one
+            cur.execute("SELECT id FROM applications WHERE job_id = ?", (job_id,))
+            row = cur.fetchone()
+            if row:
+                application_id = row[0]
+                cur.execute("""
+                    UPDATE applications
+                    SET status     = 'Open',
+                        created_at = ?,    -- in case you want created_at to match apply date
+                        updated_at = ?
+                    WHERE id = ?
+                """, (today, today, application_id))
+            else:
+                cur.execute("""
+                    INSERT INTO applications (job_id, status, created_at, updated_at)
+                        VALUES (?, 'Open', ?, ?)
+                """, (job_id, today, today))
+
             conn.commit()
             conn.close()
-            self.log(f"Applied to job {job_id}")
+
+            self.log(f"Applied to job {job_id} (and created application record)")
         except Exception as e:
             self.log(f"Error marking job {job_id} as applied: {e}")
 
