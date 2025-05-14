@@ -14,6 +14,7 @@ class ApplicationsDisplay:
         self.applications = []
         self.notes        = []
         self.job_detail   = None
+        self.show_finalized_only = False
 
     def fetch_notes(self, application_id):
         """
@@ -77,7 +78,7 @@ class ApplicationsDisplay:
         prompt_row = curses.LINES - 4
         self.stdscr.move(prompt_row, 0)
         self.stdscr.clrtoeol()
-        self.stdscr.addstr(prompt_row, 0, "New note: ")
+        self.stdscr.addstr(prompt_row, 0, "  New note: ")
         note = self.stdscr.getstr().decode().strip()
         curses.noecho()
 
@@ -112,15 +113,17 @@ class ApplicationsDisplay:
         # 1) prompt
         curses.echo()
         prompt_row = curses.LINES - 4
-        self.stdscr.addstr(
-            prompt_row, 0,
-            "Finalize reason ([h] Hired / [r] Rejected / [a] Abandoned): "
-        )
+        self.stdscr.attron(curses.color_pair(5))
+        prompt_txt = "  👉  Finalize reason ([h] Hired / [r] Rejected / [a] Abandoned / [k] Keep Open):"
+        self.stdscr.addstr(prompt_row, 0, prompt_txt)
+        self.stdscr.attroff(curses.color_pair(5))
+        self.stdscr.addstr(prompt_row, len(prompt_txt), "  ")
         choice = self.stdscr.getkey().lower()
         curses.noecho()
 
         # 2) validate
         mapping = {'h': 'Hired', 'r': 'Rejected', 'a': 'Abandoned'}
+        # Don't have 'k': 'Keep Open' on purpose so it wont' change the status of the application
         if choice not in mapping:
             # invalid entry, just return without touching the DB
             return
@@ -158,27 +161,32 @@ class ApplicationsDisplay:
 
     def fetch_applications(self):
         """
-        Return all user applications, with their status and the real company name
-        (pulled out of the JSON 'answer' in gpt_interactions).
+        Return all user applications, with their status and real company_name.
+        If self.show_finalized_only is True, only return non-Open statuses.
         """
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
 
-        cur.execute("""
+        base_query = """
             SELECT
                 a.id                 AS application_id,
                 a.job_id             AS job_id,
-                json_extract(gi.answer, '$.company_name')
-                                    AS company_name,
+                json_extract(gi.answer, '$.company_name') AS company_name,
                 a.created_at         AS applied_date,
                 a.status             AS status
             FROM applications AS a
             JOIN gpt_interactions AS gi
-            ON gi.job_id = a.job_id
-            ORDER BY a.created_at DESC
-        """)
+              ON gi.job_id = a.job_id
+        """
+        if not self.show_finalized_only:
+            base_query += " WHERE a.status = 'Open'"
+        else:
+            base_query += " WHERE a.status <> 'Open'"
 
+        base_query += " ORDER BY a.created_at DESC"
+
+        cur.execute(base_query)
         rows = cur.fetchall()
         conn.close()
         return rows
@@ -195,7 +203,7 @@ class ApplicationsDisplay:
             mid_w   = w // 3
             right_w = w - left_w - mid_w - 4
 
-            # ─── Header row (row 0) ─────────────────────────────────────────
+            # ─── Header row ──────────────────────────────────────────────
             titles = [
                 "Company".center(left_w),
                 "Notes".center(mid_w),
@@ -206,24 +214,24 @@ class ApplicationsDisplay:
             self.stdscr.addstr(0, 0, header_line[:w])
             self.stdscr.attroff(curses.color_pair(4))
 
-            base_y = 2  # content starts here
+            base_y = 2
 
-            # ─── Left pane: applications list ──────────────────────────────
+            # ─── Left pane: applications list ───────────────────────────
             apps = self.fetch_applications()
-            # keep it in self.applications so the key handler can see it
             self.applications = apps
+
             for idx, (application_id, job_id, company, applied_date, status) in enumerate(apps):
                 y = base_y + idx
-                label = f"{company} ({applied_date.split(' ')[0]})"
-                attr = curses.A_REVERSE if idx == self.cursor else curses.A_NORMAL
+                # show status initial in the label too
+                label = f"  {company} ({applied_date.split(' ')[0]}) [{status[0]}]  "
+                attr  = curses.A_REVERSE if idx == self.cursor else curses.A_NORMAL
                 self.stdscr.addnstr(y, 0, label, left_w - 1, attr)
 
-            # ─── Middle & Right panes ──────────────────────────────────────
+            # ─── Middle & Right panes ──────────────────────────────────
             if apps:
-                # grab the selected row
                 application_id, job_id, company, applied_date, status = apps[self.cursor]
 
-                # ─── Notes pane ────────────────────────────────────────────
+                # Notes pane
                 y = base_y
                 self.fetch_notes(application_id)
                 if not self.notes:
@@ -237,24 +245,22 @@ class ApplicationsDisplay:
                                 self.stdscr.addstr(y, left_w + 2, wrapped)
                                 y += 1
 
-                # ─── Details pane ─────────────────────────────────────────
+                # Details pane
                 detail = self.fetch_job_detail(job_id)
-                x0 = left_w + mid_w + 4
-                y0 = base_y
+                x0, y0 = left_w + mid_w + 4, base_y
 
-                # 1️⃣ Available Positions
+                # Available Positions
                 self.stdscr.addstr(y0, x0, "Available Positions:", curses.A_BOLD)
                 y0 += 1
                 for p in detail["positions_list"]:
-                    line = f"{p.get('position','')} —  {p.get('link','')}"
+                    line = f"{p.get('position','')} — {p.get('link','')}"
                     for wrapped in textwrap.wrap(line, right_w - 1):
                         if y0 < h - 4:
                             self.stdscr.addstr(y0, x0, wrapped)
                             y0 += 1
-                    # y0 += 1
                 y0 += 1
 
-                # 2️⃣ Summary
+                # Summary
                 self.stdscr.addstr(y0, x0, "Summary:", curses.A_BOLD)
                 y0 += 1
                 for wrapped in textwrap.wrap(detail["Summary"], right_w - 1):
@@ -263,7 +269,7 @@ class ApplicationsDisplay:
                         y0 += 1
                 y0 += 1
 
-                # 3️⃣ How to Apply
+                # How to Apply
                 self.stdscr.addstr(y0, x0, "How to Apply:", curses.A_BOLD)
                 y0 += 1
                 for wrapped in textwrap.wrap(detail["How to Apply"], right_w - 1):
@@ -272,33 +278,40 @@ class ApplicationsDisplay:
                         y0 += 1
                 y0 += 1
 
-                # ─── Listing Link ─────────────────────────────────────────────
+                # Listing Link
                 self.stdscr.addstr(y0, x0, "Listing Link:", curses.A_BOLD)
                 y0 += 1
                 for wrapped in textwrap.wrap(detail["Listing Link"], right_w - 1):
                     if y0 < h - 4:
                         self.stdscr.addstr(y0, x0, wrapped)
                         y0 += 1
-                y0 += 1
 
-                # Help line for this view
-                help_txt = "[↑↓] Select  [n] Note  [f] Finalize  [q] Back to Menu"
-                self.stdscr.attron(curses.color_pair(7))
-                self.stdscr.addnstr(h - 2, left_w + 2, help_txt, mid_w - 1)
-                self.stdscr.attroff(curses.color_pair(7))
+            # ─── Help line ───────────────────────────────────────────────
+            help_txt = "[↑↓] Select  [space] Toggle Finalized  [n] Note  [f] Finalize  [q] Back"
+            # compute centered X position
+            start_x = max(0, (w - len(help_txt)) // 2)
+
+            self.stdscr.attron(curses.color_pair(7))
+            # draw the entire help text, ensuring enough width
+            self.stdscr.addnstr(h - 2, start_x, help_txt, len(help_txt))
+            self.stdscr.attroff(curses.color_pair(7))
 
             self.stdscr.refresh()
 
-            # ─── Key handling ────────────────────────────────────────────
+            # ─── Key handling ───────────────────────────────────────────
             c = self.stdscr.getch()
             if c == curses.KEY_UP and self.cursor > 0:
                 self.cursor -= 1
             elif c == curses.KEY_DOWN and self.cursor < len(self.applications) - 1:
                 self.cursor += 1
+            elif c == ord(' '):  # Toggle finalized filter
+                self.show_finalized_only = not self.show_finalized_only
+                self.cursor = 0
             elif c == ord('n') and self.applications:
                 self.add_note(application_id, job_id)
             elif c == ord('f') and self.applications:
                 self.finalize(application_id, job_id)
             elif c in (ord('q'), 27):
                 break
+
 
