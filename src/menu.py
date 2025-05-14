@@ -66,6 +66,10 @@ class MenuApp:
         ai_recommendations_menu = "😅 No job matches for your resume yet"
         if self.total_ai_job_recommendations > 0:
             ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
+        
+        # Fetch applied-listings count
+        applied_count = self.db_manager.fetch_applied_listings_count()
+        applications_menu = f"📋 Applications ({applied_count})"
 
         self.menu_items = [resume_menu,
                            "🕸  Scrape \"Ask HN: Who's hiring?\"",
@@ -73,7 +77,7 @@ class MenuApp:
                             "🕸  Scrape \"Workday\"",
                            db_menu_item, find_best_matches_menu,
                            ai_recommendations_menu,
-                           "📋 Applications"]
+                           applications_menu]
         self.current_row = 0
         self.display_splash_screen()
         self.run()
@@ -219,11 +223,16 @@ class MenuApp:
         if self.total_ai_job_recommendations > 0:
             ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
 
+        # Update the Applications counter
+        applied_count = self.db_manager.fetch_applied_listings_count()
+        applications_menu = f"📋 Applications ({applied_count})"
+
         # Update the relevant menu items
         self.menu_items[0] = resume_menu
         self.menu_items[4] = db_menu_item
         self.menu_items[5] = find_best_matches_menu
         self.menu_items[6] = ai_recommendations_menu
+        self.menu_items[7] = applications_menu
 
         # Redraw the menu to reflect the updated items
         self.draw_menu()
