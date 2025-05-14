@@ -14,43 +14,14 @@ class ApplicationsDisplay:
         self.applications = []
         self.notes        = []
         self.job_detail   = None
-        self.fetch_apps()
 
-    def fetch_apps(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("PRAGMA journal_mode=WAL;")
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT jl.id AS job_id,
-                   json_extract(gi.answer, '$.company_name') AS company
-            FROM gpt_interactions gi
-            JOIN job_listings jl ON gi.job_id = jl.id
-            WHERE jl.applied = 1
-            ORDER BY jl.id DESC
-        """)
-        self.applications = cur.fetchall()  # [(job_id, company), ...]
-        conn.close()
-
-    def fetch_notes(self, job_id):
+    def fetch_notes(self, application_id):
         """
-        Load self.notes = [(note, created_at), ...] for the given job_id
-        under the new schema.
+        Load self.notes = [(note, created_at), ...] for the given application_id.
         """
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
 
-        # 1) find the application row for this job:
-        cur.execute("SELECT id FROM applications WHERE job_id = ?", (job_id,))
-        row = cur.fetchone()
-        if not row:
-            # no application record yet — no notes
-            self.notes = []
-            conn.close()
-            return
-
-        application_id = row[0]
-
-        # 2) fetch all notes for that application_id
         cur.execute("""
             SELECT note, created_at 
             FROM application_notes
@@ -100,7 +71,7 @@ class ApplicationsDisplay:
         detail["Listing Link"] = link or ""
         return detail
 
-    def add_note(self, job_id):
+    def add_note(self, application_id, job_id):
         # prompt
         curses.echo()
         prompt_row = curses.LINES - 4
@@ -117,17 +88,14 @@ class ApplicationsDisplay:
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
 
-        # 1) find (or create) the application record
-        cur.execute("SELECT id FROM applications WHERE job_id = ?", (job_id,))
-        row = cur.fetchone()
-        if row:
-            application_id = row[0]
-        else:
-            # if somehow no application row yet, create one
+        # 1) make sure we have an application row
+        if application_id is None:
+            # no application yet, so insert it now
             now = datetime.datetime.utcnow().isoformat()
             cur.execute(
-                "INSERT INTO applications (job_id, status, created_at, updated_at) VALUES (?, 'Open', ?, ?)",
-                (job_id, now, now)
+                "INSERT INTO applications (job_id, status, created_at, updated_at) "
+                "VALUES (?, 'Open', ?, ?)",
+                (job_id, now, now),
             )
             application_id = cur.lastrowid
 
@@ -140,7 +108,7 @@ class ApplicationsDisplay:
         conn.commit()
         conn.close()
 
-    def finalize(self, job_id):
+    def finalize(self, application_id, job_id):
         # 1) prompt
         curses.echo()
         prompt_row = curses.LINES - 4
@@ -165,22 +133,17 @@ class ApplicationsDisplay:
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
 
-        # check for existing application
-        cur.execute("SELECT id FROM applications WHERE job_id = ?", (job_id,))
-        row = cur.fetchone()
-        if row:
-            application_id = row[0]
+        # if they’ve already got an app row, update it; otherwise insert it
+        if application_id is not None:
             cur.execute(
-                "UPDATE applications "
-                "   SET status = ?, updated_at = ? "
-                " WHERE id = ?",
-                (status, now, application_id)
+                "UPDATE applications SET status = ?, updated_at = ? WHERE id = ?",
+                (status, now, application_id),
             )
         else:
             cur.execute(
                 "INSERT INTO applications (job_id, status, created_at, updated_at) "
                 "VALUES (?, ?, ?, ?)",
-                (job_id, status, now, now)
+                (job_id, status, now, now),
             )
             application_id = cur.lastrowid
 
@@ -193,23 +156,36 @@ class ApplicationsDisplay:
         conn.commit()
         conn.close()
 
-    def fetch_application_date(self, job_id):
+    def fetch_applications(self):
+        """
+        Return all user applications, with their status and the real company name
+        (pulled out of the JSON 'answer' in gpt_interactions).
+        """
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
+
         cur.execute("""
-            SELECT applied_date
-            FROM job_listings
-            WHERE id = ?
-        """, (job_id,))
-        row = cur.fetchone()
+            SELECT
+                a.id                 AS application_id,
+                a.job_id             AS job_id,
+                json_extract(gi.answer, '$.company_name')
+                                    AS company_name,
+                a.created_at         AS applied_date,
+                a.status             AS status
+            FROM applications AS a
+            JOIN gpt_interactions AS gi
+            ON gi.job_id = a.job_id
+            ORDER BY a.created_at DESC
+        """)
+
+        rows = cur.fetchall()
         conn.close()
-        return row[0] or ""  # will be "" if null
+        return rows
 
     def draw_board(self):
         import json
 
-        self.fetch_apps()
         while True:
             self.stdscr.clear()
             h, w = self.stdscr.getmaxyx()
@@ -233,20 +209,23 @@ class ApplicationsDisplay:
             base_y = 2  # content starts here
 
             # ─── Left pane: applications list ──────────────────────────────
-            for idx, (job_id, company) in enumerate(self.applications):
+            apps = self.fetch_applications()
+            # keep it in self.applications so the key handler can see it
+            self.applications = apps
+            for idx, (application_id, job_id, company, applied_date, status) in enumerate(apps):
                 y = base_y + idx
-                date = self.fetch_application_date(job_id)
-                label = f"  {company} ({date})" if date else f"  {company}"
+                label = f"{company} ({applied_date.split(' ')[0]})"
                 attr = curses.A_REVERSE if idx == self.cursor else curses.A_NORMAL
                 self.stdscr.addnstr(y, 0, label, left_w - 1, attr)
 
-            # ─── Middle & Right panes (only if there are applications) ─────
-            if self.applications:
-                job_id, company = self.applications[self.cursor]
+            # ─── Middle & Right panes ──────────────────────────────────────
+            if apps:
+                # grab the selected row
+                application_id, job_id, company, applied_date, status = apps[self.cursor]
 
                 # ─── Notes pane ────────────────────────────────────────────
                 y = base_y
-                self.fetch_notes(job_id)
+                self.fetch_notes(application_id)
                 if not self.notes:
                     hint = "Press [n] to add a note"
                     self.stdscr.addstr(y, left_w + 2, hint, curses.A_DIM)
@@ -317,9 +296,9 @@ class ApplicationsDisplay:
             elif c == curses.KEY_DOWN and self.cursor < len(self.applications) - 1:
                 self.cursor += 1
             elif c == ord('n') and self.applications:
-                self.add_note(job_id)
+                self.add_note(application_id, job_id)
             elif c == ord('f') and self.applications:
-                self.finalize(job_id)
+                self.finalize(application_id, job_id)
             elif c in (ord('q'), 27):
                 break
 
