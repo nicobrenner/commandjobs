@@ -108,7 +108,7 @@ class ApplicationsDisplay:
         while True:
             # redraw border & title
             win.box()
-            win.addstr(0, 2, " Enter note (Ctrl-G save  Ctrl-D cancel) ")
+            win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
             win.refresh()
 
             # display the pad window
