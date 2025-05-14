@@ -94,7 +94,7 @@ class ApplicationsDisplay:
         win = curses.newwin(box_h, box_w, start_y, start_x)
         win.keypad(True)
         win.box()
-        win.addstr(0, 2, " Enter note (Ctrl-G save   Ctrl-D cancel) ")
+        win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
         win.refresh()
 
         # ─── create a pad big enough for huge pastes ───────────────
