@@ -173,6 +173,7 @@ class MenuApp:
         self.stdscr.addstr(1, 0, "-" * max_x)
 
     def draw_menu(self):
+        # Draw title and menu items
         self.draw_title()
         h, w = self.stdscr.getmaxyx()
         for idx, item in enumerate(self.menu_items):
@@ -184,6 +185,16 @@ class MenuApp:
                 self.stdscr.attroff(curses.color_pair(1))
             else:
                 self.stdscr.addstr(y, x, item)
+
+        # --- Centered controls hint line ---
+        controls = "[↑↓] Select  [Enter] Go into  [q] Quit to terminal"
+        # place it two rows up from bottom
+        hint_y = h - 2
+        hint_x = max(0, (w - len(controls)) // 2)
+        self.stdscr.attron(curses.color_pair(7))
+        self.stdscr.addstr(hint_y, hint_x, controls[:w - hint_x - 1])
+        self.stdscr.attroff(curses.color_pair(7))
+
         self.stdscr.refresh()
 
     def run(self):
@@ -303,6 +314,7 @@ class MenuApp:
     def get_total_listings(self):
         """Return the total number of job listings in the database."""
         conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM job_listings")
         total = cur.fetchone()[0]
