@@ -4,6 +4,7 @@ import asyncio
 class DatabaseManager:
     def __init__(self, db_path):
         self.conn = sqlite3.connect(db_path)
+        self.conn.execute("PRAGMA journal_mode=WAL;")
         self.cursor = self.conn.cursor()
         self.initialize_db()
 
