@@ -1,0 +1,24 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore logs and databases
+*.log
+
+# Ignore environments
+venv/
+.env
+.env.*
+
+# Ignore OS + IDE files
+.DS_Store
+.idea/
+.vscode/
+*.egg-info/
+node_modules/
+
+# Ignore git + tests
+.git
+tests/

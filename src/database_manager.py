@@ -4,6 +4,7 @@ import asyncio
 class DatabaseManager:
     def __init__(self, db_path):
         self.conn = sqlite3.connect(db_path)
+        self.conn.execute("PRAGMA journal_mode=WAL;")
         self.cursor = self.conn.cursor()
         self.initialize_db()
 
@@ -51,6 +52,14 @@ class DatabaseManager:
             return result[0]  # Return the first element of the tuple, which is the count
         else:
             return 0  # Return 0 if no rows are found, for safety
+    
+    def fetch_applied_listings_count(self):
+        """Return the total number of listings the user has marked as applied."""
+        query = "SELECT COUNT(*) FROM job_listings WHERE applied = 1"
+        self.cursor.execute(query)
+        result = self.cursor.fetchone()
+        return result[0] if result else 0
+
 
     def save_gpt_interaction(self, job_id, prompt, answer):
         self.cursor.execute("INSERT INTO gpt_interactions (job_id, prompt, answer) VALUES (?, ?, ?)", (job_id, prompt, answer))

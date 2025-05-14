@@ -16,6 +16,7 @@ class HNScraper:
     def save_to_database(self, original_text, original_html, source, external_id):
         """Save a job listing to the SQLite database."""
         conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA journal_mode=WAL;")
         c = conn.cursor()
         # Use INSERT OR IGNORE to skip existing records with the same external_id
         c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",

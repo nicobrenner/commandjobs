@@ -1,0 +1,16 @@
+# docker/Dockerfile.base
+
+FROM python:3.12
+
+# Install system dependencies just once!
+RUN apt-get update && \
+    apt-get install -y wget unzip chromium chromium-driver && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set a working directory
+WORKDIR /commandjobs
+
+# Install project Python dependencies (this will still cache very well)
+COPY config/requirements.txt /commandjobs/config/requirements.txt
+RUN pip3 install --no-cache-dir -r config/requirements.txt

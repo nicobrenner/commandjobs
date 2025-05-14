@@ -5,6 +5,7 @@ from job_scraper.hacker_news.scraper import HNScraper
 from display_table import draw_table
 from database_manager import DatabaseManager
 from display_matching_table import MatchingTableDisplay
+from display_applications import ApplicationsDisplay
 from gpt_processor import GPTProcessor
 
 import asyncio
@@ -65,13 +66,18 @@ class MenuApp:
         ai_recommendations_menu = "😅 No job matches for your resume yet"
         if self.total_ai_job_recommendations > 0:
             ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
+        
+        # Fetch applied-listings count
+        applied_count = self.db_manager.fetch_applied_listings_count()
+        applications_menu = f"📋 Applications ({applied_count})"
 
         self.menu_items = [resume_menu,
                            "🕸  Scrape \"Ask HN: Who's hiring?\"",
                            "🕸  Scrape \"Work at a Startup jobs\"",
                             "🕸  Scrape \"Workday\"",
                            db_menu_item, find_best_matches_menu,
-                           ai_recommendations_menu]  # New menu option added
+                           ai_recommendations_menu,
+                           applications_menu]
         self.current_row = 0
         self.display_splash_screen()
         self.run()
@@ -167,6 +173,7 @@ class MenuApp:
         self.stdscr.addstr(1, 0, "-" * max_x)
 
     def draw_menu(self):
+        # Draw title and menu items
         self.draw_title()
         h, w = self.stdscr.getmaxyx()
         for idx, item in enumerate(self.menu_items):
@@ -178,6 +185,16 @@ class MenuApp:
                 self.stdscr.attroff(curses.color_pair(1))
             else:
                 self.stdscr.addstr(y, x, item)
+
+        # --- Centered controls hint line ---
+        controls = "[↑↓] Select  [Enter] Go into  [q] Quit to terminal"
+        # place it two rows up from bottom
+        hint_y = h - 2
+        hint_x = max(0, (w - len(controls)) // 2)
+        self.stdscr.attron(curses.color_pair(7))
+        self.stdscr.addstr(hint_y, hint_x, controls[:w - hint_x - 1])
+        self.stdscr.attroff(curses.color_pair(7))
+
         self.stdscr.refresh()
 
     def run(self):
@@ -217,11 +234,16 @@ class MenuApp:
         if self.total_ai_job_recommendations > 0:
             ai_recommendations_menu = f"✅ {self.total_ai_job_recommendations} recommended listings, out of {total_processed}"
 
+        # Update the Applications counter
+        applied_count = self.db_manager.fetch_applied_listings_count()
+        applications_menu = f"📋 Applications ({applied_count})"
+
         # Update the relevant menu items
         self.menu_items[0] = resume_menu
         self.menu_items[4] = db_menu_item
         self.menu_items[5] = find_best_matches_menu
         self.menu_items[6] = ai_recommendations_menu
+        self.menu_items[7] = applications_menu
 
         # Redraw the menu to reflect the updated items
         self.draw_menu()
@@ -246,6 +268,9 @@ class MenuApp:
             exit_message = asyncio.run(self.process_with_gpt())
         elif self.current_row == 6:  # Index of the new menu option
             self.table_display.draw_table()
+        elif self.current_row == 7:           # adjust index if needed
+            self.app_display = ApplicationsDisplay(self.stdscr, self.db_path)
+            self.app_display.draw_board()
         self.stdscr.clear()
         self.update_menu_items()
         if exit_message != '':
@@ -289,6 +314,7 @@ class MenuApp:
     def get_total_listings(self):
         """Return the total number of job listings in the database."""
         conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM job_listings")
         total = cur.fetchone()[0]
