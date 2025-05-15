@@ -174,3 +174,5 @@ job_listings.db-wal
 
 # Ignore vscode configuration
 .vscode/
+
+test.py
