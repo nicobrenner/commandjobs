@@ -1,6 +1,7 @@
 import locale
 import curses
-import curses.textpad
+import base64
+import sys
 import sqlite3
 import textwrap
 import json
@@ -270,18 +271,20 @@ class ApplicationsDisplay:
     def view_note(self, note_text):
         """
         Display a read-only, scrollable view of a note with wrapping.
-        Exit with 'q' or ESC.
+        Exit with 'q' or ESC.  Ctrl-K copies full note to clipboard.
         """
+        full_text = note_text  # original text for copying
+
         curses.curs_set(0)
         h, w = self.stdscr.getmaxyx()
         box_h, box_w = h - 6, w - 8
         start_y, start_x = 3, 4
+
+        # outer window
         win = curses.newwin(box_h, box_w, start_y, start_x)
         win.keypad(True)
-        win.box()
-        win.addstr(0, 2, " View note (↑↓ scroll, q/Esc exit) ")
-        win.refresh()
-        # wrap text into lines
+
+        # prepare wrapped lines
         pad_w = box_w - 2
         lines = []
         for paragraph in note_text.split('\n'):
@@ -290,25 +293,83 @@ class ApplicationsDisplay:
         pad_h = max(len(lines), box_h - 2)
         pad = curses.newpad(pad_h, pad_w)
         for idx, line in enumerate(lines):
-            # write with clipping and error handling
             try:
                 pad.addnstr(idx, 0, line, pad_w)
             except curses.error:
                 pass
+
         pad_pos = 0
+        title = " View note: [↑↓] Scroll | [q/Esc] Close | [k] Copy to clipboard "
+
         while True:
-            win.box(); win.refresh()
+            # redraw frame **and** title each time
+            win.erase()
+            win.box()
+            win.addstr(0, 2, title)
+            win.refresh()
+
+            # draw pad
             pad.refresh(pad_pos, 0,
-                        start_y+1, start_x+1,
-                        start_y+box_h-2, start_x+box_w-2)
+                        start_y + 1, start_x + 1,
+                        start_y + box_h - 2, start_x + box_w - 2)
+
             ch = win.getch()
+            # debug – show the last key code
+            win.refresh()
+
             if ch in (ord('q'), 27):
                 break
             elif ch == curses.KEY_UP and pad_pos > 0:
                 pad_pos -= 1
             elif ch == curses.KEY_DOWN and pad_pos < len(lines) - (box_h - 2):
                 pad_pos += 1
-        # upon exit, main draw_board will redraw everything
+
+            elif ch == ord('k'):  # lowercase “k” to copy
+                try:
+                    # 1) base64-encode the full text
+                    b64 = base64.b64encode(full_text.encode('utf-8')).decode('ascii')
+                    # 2) build OSC52 sequence (c = clipboard)
+                    seq = f"\033]52;c;{b64}\a"
+
+                    # 3) temporarily end curses so we can write raw escapes
+                    curses.def_prog_mode()
+                    curses.endwin()
+
+                    # 4) send the sequence to the terminal
+                    sys.stdout.write(seq)
+                    sys.stdout.flush()
+
+                    # 5) resume curses
+                    curses.reset_prog_mode()
+                    curses.doupdate()
+                    curses.curs_set(0)
+
+                    # 6) flash confirmation on the last interior line
+                    h, w = self.stdscr.getmaxyx()
+                    prompt_row = h - 3
+                    msg = "Copied note to clipboard"
+
+                    self.stdscr.attron(curses.color_pair(5))
+                    self.stdscr.addstr(prompt_row, 5, msg)
+                    self.stdscr.attroff(curses.color_pair(5))
+                    self.stdscr.refresh()
+
+                    curses.napms(1000)
+
+                    # clear that prompt line
+                    self.stdscr.move(prompt_row, 0)
+                    self.stdscr.clrtoeol()
+                    self.stdscr.refresh()
+                except Exception:
+                    # (if something really weird happens)
+                    msg = "Copy failed"
+                    win.addstr(box_h - 2, 2, msg, curses.A_BOLD)
+                    win.refresh()
+                    curses.napms(1000)
+                    win.addstr(box_h - 2, 2, " " * len(msg))
+                    win.refresh()
+
+    # when we break out, draw_board will redraw the main screen
 
     def finalize(self, application_id, job_id):
         # unchanged
