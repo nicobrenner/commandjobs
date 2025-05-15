@@ -270,58 +270,63 @@ class ApplicationsDisplay:
 
     def view_note(self, note_text):
         """
-        Display a read-only, scrollable view of a note with wrapping.
-        Exit with 'q' or ESC.  Ctrl-K copies full note to clipboard.
+        Display a read-only note with a one-cell margin inside the box.
+        Ctrl-K copies to clipboard.
         """
-        full_text = note_text  # original text for copying
-
+        full_text = note_text
         curses.curs_set(0)
         h, w = self.stdscr.getmaxyx()
         box_h, box_w = h - 6, w - 8
         start_y, start_x = 3, 4
 
-        # outer window
+        # outer frame
         win = curses.newwin(box_h, box_w, start_y, start_x)
         win.keypad(True)
 
-        # prepare wrapped lines
-        pad_w = box_w - 2
+        # —— prepare wrapped lines using the *inner* width (box_w - 4) ——
+        inner_w = box_w - 4  # leave one‐cell on left + right
         lines = []
         for paragraph in note_text.split('\n'):
-            wrapped = textwrap.wrap(paragraph, pad_w)
+            wrapped = textwrap.wrap(paragraph, inner_w)
             lines.extend(wrapped if wrapped else [''])
-        pad_h = max(len(lines), box_h - 2)
-        pad = curses.newpad(pad_h, pad_w)
+        pad_h = max(len(lines), box_h - 4)
+        pad = curses.newpad(pad_h, inner_w)
+
         for idx, line in enumerate(lines):
             try:
-                pad.addnstr(idx, 0, line, pad_w)
+                pad.addnstr(idx, 0, line, inner_w)
             except curses.error:
                 pass
 
         pad_pos = 0
         title = " View note: [↑↓] Scroll | [q/Esc] Close | [k] Copy to clipboard "
 
+        # compute the *inner* viewport coordinates
+        top    = start_y + 1
+        left   = start_x + 1
+        bottom = start_y + box_h - 2
+        right  = start_x + box_w - 2
+
         while True:
-            # redraw frame **and** title each time
+            # redraw frame and title
             win.erase()
             win.box()
             win.addstr(0, 2, title)
             win.refresh()
 
-            # draw pad
+            # refresh the pad inside the 1-cell margin
             pad.refresh(pad_pos, 0,
-                        start_y + 1, start_x + 1,
-                        start_y + box_h - 2, start_x + box_w - 2)
+                        top + 1,    # shift down one for margin
+                        left + 1,   # shift right one for margin
+                        bottom - 1, # shift up one for margin
+                        right - 1)  # shift left one for margin
 
             ch = win.getch()
-            # debug – show the last key code
-            win.refresh()
-
             if ch in (ord('q'), 27):
                 break
             elif ch == curses.KEY_UP and pad_pos > 0:
                 pad_pos -= 1
-            elif ch == curses.KEY_DOWN and pad_pos < len(lines) - (box_h - 2):
+            elif ch == curses.KEY_DOWN and pad_pos < len(lines) - (box_h - 4):
                 pad_pos += 1
 
             elif ch == ord('k'):  # lowercase “k” to copy
