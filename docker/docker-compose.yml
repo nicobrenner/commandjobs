@@ -1,9 +1,10 @@
-#
-# Docker compose file running Flask app in development (debug) mode
-# https://docs.docker.com/compose/compose-file/
-#
-version: "3.7"
 services:
+  base:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.base
+    image: commandjobs-base:latest
+
   app:
     # Set container & image name
     container_name: commandjobs
@@ -12,6 +13,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    depends_on:
+      - base
 
     # Set environment variables
     environment:
