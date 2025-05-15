@@ -126,48 +126,146 @@ class ApplicationsDisplay:
             conn.close()
 
     def add_note(self, application_id, job_id):
-        # unchanged multi-line editor (omitted for brevity)
+        """
+        Multi-line note entry with visible cursor.
+        Save with Ctrl-G, cancel with Ctrl-D.
+        """
+        # show the cursor
         curses.curs_set(1)
+
+        # screen dimensions
         h, w = self.stdscr.getmaxyx()
-        box_h, box_w = h - 6, w - 8
-        start_y, start_x = 3, 4
+        box_h = h - 6
+        box_w = w - 8
+        start_y = 3
+        start_x = 4
+
+        # draw border
         win = curses.newwin(box_h, box_w, start_y, start_x)
-        win.keypad(True)
         win.box()
         win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
         win.refresh()
+
+        # pad for input (taller than box to allow scrolling)
         pad_h = max(10000, box_h * 20)
-        pad_w = box_w - 2
+        # allow up to 2048 columns before running out of space
+        pad_w = max(2048, box_w - 2)
         pad = curses.newpad(pad_h, pad_w)
         pad.scrollok(True)
         pad.idlok(True)
-        pad.keypad(True)
+
         pad_row = 0
         cur_y, cur_x = 0, 0
         saved = False
+
         while True:
+            # redraw border & title
             win.box()
-            win.addstr(0, 2, " Enter note (Ctrl-G save   Ctrl-D cancel) ")
+            win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
             win.refresh()
-            pad.refresh(pad_row, 0, start_y+1, start_x+1, start_y+box_h-2, start_x+box_w-2)
-            try:
-                ch = pad.get_wch()
-            except curses.error:
-                continue
-            if ch == '\x07':  # Ctrl-G
-                saved = True; break
-            if ch == '\x04':  # Ctrl-D
-                saved = False; break
-            # handle text input and cursor movement (omitted)
-            # auto-scroll logic (omitted)
-            real_y = start_y+1+(cur_y-pad_row)
-            real_x = start_x+1+cur_x
-            curses.setsyx(real_y, real_x); curses.doupdate()
-        curses.curs_set(0); curses.flushinp(); self.stdscr.nodelay(True)
-        while self.stdscr.getch()!=curses.ERR: pass
-        self.stdscr.nodelay(False)
-        if not saved: return
-        # gather text and insert into DB (omitted)
+
+            # display the pad window
+            pad.refresh(pad_row, 0,
+                        start_y + 1, start_x + 1,
+                        start_y + box_h - 2, start_x + box_w - 2)
+
+            ch = self.stdscr.getch()
+            if ch == 7:            # Ctrl-G = save
+                saved = True
+                break
+            elif ch == 4:          # Ctrl-D = cancel
+                saved = False
+                break
+            elif ch == curses.KEY_UP and pad_row > 0:
+                pad_row -= 1
+            elif ch == curses.KEY_DOWN and cur_y - pad_row >= box_h - 2:
+                pad_row += 1
+
+            elif ch in (curses.KEY_BACKSPACE, 127):
+                if cur_x > 0:
+                    cur_x -= 1
+                    try:
+                        pad.delch(cur_y, cur_x)
+                    except curses.error:
+                        pass
+                elif cur_y > 0:
+                    # move up one line
+                    cur_y -= 1
+                    line = pad.instr(cur_y, 0, pad_w).decode('utf-8').rstrip('\x00')
+                    cur_x = len(line)
+
+            elif ch in (curses.KEY_ENTER, 10, 13):
+                try:
+                    pad.addch(cur_y, cur_x, ord('\n'))
+                except curses.error:
+                    pass
+                cur_y += 1
+                cur_x = 0
+
+            elif ch == curses.KEY_LEFT and cur_x > 0:
+                cur_x -= 1
+            elif ch == curses.KEY_RIGHT:
+                cur_x += 1
+
+            elif 0 <= ch < 256:
+                # any printable character
+                try:
+                    pad.addch(cur_y, cur_x, ch)
+                except curses.error:
+                    pass
+                cur_x += 1
+
+            # ─── ensure cursor is visible ─────────────────────────────
+            # if cur_y is below the bottom of our pad window, scroll down
+            if cur_y - pad_row > box_h - 3:
+                pad_row = cur_y - (box_h - 3)
+            # if cur_y is above the top of our pad window, scroll up
+            elif cur_y < pad_row:
+                pad_row = cur_y
+            # clamp
+            pad_row = max(0, min(pad_row, pad_h - (box_h - 2)))
+
+            # reposition the curses cursor onto the pad
+            real_y = start_y + 1 + (cur_y - pad_row)
+            real_x = start_x + 1 + cur_x
+            curses.setsyx(real_y, real_x)
+            curses.doupdate()
+
+        # hide the cursor again
+        curses.curs_set(0)
+
+        if not saved:
+            return  # cancelled
+
+        # extract all lines up to cur_y
+        lines = []
+        for y in range(cur_y + 1):
+            raw = pad.instr(y, 0, pad_w).decode('utf-8').rstrip('\x00')
+            lines.append(raw.rstrip())
+        note_text = "\n".join(lines).strip()
+        if not note_text:
+            return  # nothing to save
+
+        # persist to DB
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        cur = conn.cursor()
+
+        if application_id is None:
+            now = datetime.datetime.utcnow().isoformat()
+            cur.execute(
+                "INSERT INTO applications (job_id, status, created_at, updated_at) "
+                "VALUES (?, 'Open', ?, ?)",
+                (job_id, now, now),
+            )
+            application_id = cur.lastrowid
+
+        cur.execute(
+            "INSERT INTO application_notes (application_id, note) VALUES (?, ?)",
+            (application_id, note_text)
+        )
+        conn.commit()
+        conn.close()
 
     def view_note(self, note_text):
         """
