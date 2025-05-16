@@ -131,123 +131,131 @@ class ApplicationsDisplay:
         Multi-line note entry with visible cursor.
         Save with Ctrl-G, cancel with Ctrl-D.
         """
-        # show the cursor
+        # ─── show cursor ────────────────────────────────────────────
         curses.curs_set(1)
 
-        # screen dimensions
+        # ─── compute box dims ───────────────────────────────────────
         h, w = self.stdscr.getmaxyx()
-        box_h = h - 6
-        box_w = w - 8
-        start_y = 3
-        start_x = 4
+        box_h, box_w = h - 6, w - 8
+        start_y, start_x = 3, 4
 
-        # draw border
+        # ─── draw outer border & title ─────────────────────────────
         win = curses.newwin(box_h, box_w, start_y, start_x)
+        win.keypad(True)
         win.box()
         win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
         win.refresh()
 
-        # pad for input (taller than box to allow scrolling)
+        # ─── create a pad big enough for huge pastes ───────────────
         pad_h = max(10000, box_h * 20)
         # allow up to 2048 columns before running out of space
         pad_w = max(2048, box_w - 2)
         pad = curses.newpad(pad_h, pad_w)
         pad.scrollok(True)
         pad.idlok(True)
+        pad.keypad(True)
 
         pad_row = 0
         cur_y, cur_x = 0, 0
         saved = False
 
+        # ─── edit loop ─────────────────────────────────────────────
         while True:
             # redraw border & title
             win.box()
             win.addstr(0, 2, " Enter note ([Ctrl-G] Save / [Ctrl-D] Cancel) ")
             win.refresh()
 
-            # display the pad window
-            pad.refresh(pad_row, 0,
-                        start_y + 1, start_x + 1,
-                        start_y + box_h - 2, start_x + box_w - 2)
+            # show the pad slice
+            pad.refresh(
+                pad_row, 0,
+                start_y + 1, start_x + 1,
+                start_y + box_h - 2, start_x + box_w - 2
+            )
 
-            ch = self.stdscr.getch()
-            if ch == 7:            # Ctrl-G = save
+            # use get_wch to receive wide characters properly:
+            try:
+                ch = pad.get_wch()
+            except curses.error:
+                continue
+
+            # Ctrl-G → save, Ctrl-D → cancel
+            if ch == '\x07':
                 saved = True
                 break
-            elif ch == 4:          # Ctrl-D = cancel
+            if ch == '\x04':
                 saved = False
                 break
-            elif ch == curses.KEY_UP and pad_row > 0:
-                pad_row -= 1
-            elif ch == curses.KEY_DOWN and cur_y - pad_row >= box_h - 2:
-                pad_row += 1
 
-            elif ch in (curses.KEY_BACKSPACE, 127):
-                if cur_x > 0:
-                    cur_x -= 1
+            # ── printable wide‐char (string) ─────────────────────────
+            if isinstance(ch, str):
+                if ch == '\n':
+                    cur_y += 1
+                    cur_x = 0
+                else:
                     try:
-                        pad.delch(cur_y, cur_x)
+                        pad.addstr(cur_y, cur_x, ch)
                     except curses.error:
                         pass
-                elif cur_y > 0:
-                    # move up one line
-                    cur_y -= 1
-                    line = pad.instr(cur_y, 0, pad_w).decode('utf-8').rstrip('\x00')
-                    cur_x = len(line)
+                    cur_x += 1
+            else:
+                # it's an integer key‐code: arrows, backspace, etc.
+                if ch == curses.KEY_UP and pad_row > 0:
+                    pad_row -= 1
+                elif ch == curses.KEY_DOWN and cur_y - pad_row >= box_h - 2:
+                    pad_row += 1
+                elif ch == curses.KEY_LEFT and cur_x > 0:
+                    cur_x -= 1
+                elif ch == curses.KEY_RIGHT:
+                    cur_x += 1
+                elif ch in (curses.KEY_BACKSPACE, 127):
+                    if cur_x > 0:
+                        cur_x -= 1
+                        try: pad.delch(cur_y, cur_x)
+                        except curses.error: pass
+                    elif cur_y > 0:
+                        cur_y -= 1
+                        line = pad.instr(cur_y, 0, pad_w).decode('utf-8').rstrip('\x00')
+                        cur_x = len(line)
+                # ignore other int‐codes
 
-            elif ch in (curses.KEY_ENTER, 10, 13):
-                try:
-                    pad.addch(cur_y, cur_x, ord('\n'))
-                except curses.error:
-                    pass
-                cur_y += 1
-                cur_x = 0
-
-            elif ch == curses.KEY_LEFT and cur_x > 0:
-                cur_x -= 1
-            elif ch == curses.KEY_RIGHT:
-                cur_x += 1
-
-            elif 0 <= ch < 256:
-                # any printable character
-                try:
-                    pad.addch(cur_y, cur_x, ch)
-                except curses.error:
-                    pass
-                cur_x += 1
-
-            # ─── ensure cursor is visible ─────────────────────────────
-            # if cur_y is below the bottom of our pad window, scroll down
+            # ─── auto-scroll vertically ───────────────────────────────
             if cur_y - pad_row > box_h - 3:
                 pad_row = cur_y - (box_h - 3)
-            # if cur_y is above the top of our pad window, scroll up
             elif cur_y < pad_row:
                 pad_row = cur_y
-            # clamp
             pad_row = max(0, min(pad_row, pad_h - (box_h - 2)))
 
-            # reposition the curses cursor onto the pad
+            # ─── move the hardware cursor ─────────────────────────────
             real_y = start_y + 1 + (cur_y - pad_row)
             real_x = start_x + 1 + cur_x
             curses.setsyx(real_y, real_x)
             curses.doupdate()
 
-        # hide the cursor again
+        # ─── hide cursor & clear any leftover input ────────────────
         curses.curs_set(0)
+        # try the built-in flush…
+        curses.flushinp()
+        # …and as a fallback, nodelay‐drain stdscr
+        self.stdscr.nodelay(True)
+        while True:
+            if self.stdscr.getch() == curses.ERR:
+                break
+        self.stdscr.nodelay(False)
 
         if not saved:
-            return  # cancelled
+            return   # cancelled
 
-        # extract all lines up to cur_y
+        # ─── grab all lines from the pad ───────────────────────────
         lines = []
         for y in range(cur_y + 1):
             raw = pad.instr(y, 0, pad_w).decode('utf-8').rstrip('\x00')
             lines.append(raw.rstrip())
         note_text = "\n".join(lines).strip()
         if not note_text:
-            return  # nothing to save
+            return
 
-        # persist to DB
+        # ─── persist to DB ────────────────────────────────────────
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
