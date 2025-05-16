@@ -55,7 +55,7 @@ class DatabaseManager:
     
     def fetch_applied_listings_count(self):
         """Return the total number of listings the user has marked as applied."""
-        query = "SELECT COUNT(*) FROM job_listings WHERE applied = 1"
+        query = "SELECT COUNT(*) FROM applications WHERE status = 'Open'"
         self.cursor.execute(query)
         result = self.cursor.fetchone()
         return result[0] if result else 0
