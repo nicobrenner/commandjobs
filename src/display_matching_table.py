@@ -1,9 +1,13 @@
+import locale
 import sqlite3
 import curses
 import textwrap
 import logging
 import json
 from datetime import date
+from display_applications import ApplicationsDisplay
+
+locale.setlocale(locale.LC_ALL, '')
 
 class MatchingTableDisplay:
     def __init__(self, stdscr, db_path):
@@ -246,19 +250,27 @@ class MatchingTableDisplay:
                     self.discard_listing(job[8])  # job[8] = job_id
                     self.total_entries = self.fetch_total_entries()
                     self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
-                    self.highlighted_row_index = 0
+                    # self.highlighted_row_index = 0
                     self.draw_page(self.current_page)
+            elif key == ord('q'):
+                break  # Exit the table view
             elif key == ord('a'):
                 # Apply to current job
                 job = self.fetch_job(self.highlighted_row_index + (self.current_page - 1) * self.rows_per_page)
                 if job:
                     self.apply_to_listing(job[8])  # job[8] = job_id
+                    # Show post-apply dialog
+                    choice = self.show_post_apply_dialog()
+                    if choice == 'a':
+                        # Go to applications view
+                        apps = ApplicationsDisplay(self.stdscr, self.db_path)
+                        apps.draw_board()
+                        return
+                    # If 'q', just return to table view
                     self.total_entries = self.fetch_total_entries()
                     self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
-                    self.highlighted_row_index = 0
+                    # self.highlighted_row_index = 0
                     self.draw_page(self.current_page)
-            elif key == ord('q'):
-                break  # Exit the table view
 
     def discard_listing(self, job_id):
         try:
@@ -392,6 +404,15 @@ class MatchingTableDisplay:
                 self.stdscr.nodelay(False)
 
                 while True:
+                    # Draw control hints at the bottom center
+                    controls = "[← ] Prev  [→ ] Next  [q] Back  [a] Apply"
+                    self.stdscr.attron(curses.color_pair(7))
+                    self.stdscr.addstr(max_y - 2,
+                                    max(0, (max_x - len(controls)) // 2),
+                                    controls)
+                    self.stdscr.attroff(curses.color_pair(7))
+                    self.stdscr.refresh()
+                    
                     ch = self.stdscr.getch()
                     if ch == ord('q'):
                         return  # Quit the detail view
@@ -401,3 +422,47 @@ class MatchingTableDisplay:
                     elif ch == curses.KEY_RIGHT:
                         job_index = (job_index + 1) % self.total_entries  # Move to the next job or wrap around
                         break  # Break the inner loop to refresh the job detail view with the new index
+                    elif ch == ord('a'):
+                        # Apply directly from detail view
+                        job_id = job[8]  # adjust index if needed
+                        self.apply_to_listing(job_id)
+                        # Show post-apply dialog
+                        choice = self.show_post_apply_dialog()
+                        if choice == 'a':
+                            # Go to applications view
+                            apps = ApplicationsDisplay(self.stdscr, self.db_path)
+                            apps.draw_board()
+                            return
+                        # If 'q', just return to detail view
+                        break
+
+    def show_post_apply_dialog(self):
+        """
+        Display a centered dialog offering [q] Keep browsing or [a] Go to applications.
+        Returns 'q' or 'a'.
+        """
+        max_y, max_x = self.stdscr.getmaxyx()
+        text = "[q] Keep browsing  [a] Go to applications?"
+        width = len(text) + 4
+        height = 3
+        start_y = (max_y - height) // 2
+        start_x = (max_x - width) // 2
+
+        win = curses.newwin(height, width, start_y, start_x)
+        win.box()
+        win.attron(curses.color_pair(7))
+        win.addstr(1, 2, text)
+        win.attroff(curses.color_pair(7))
+        win.refresh()
+
+        # Immediately listen for q or a (no Enter required)
+        while True:
+            ch = win.getch()
+            if ch in (ord('q'), ord('a')):
+                break
+
+        # Clear dialog and refresh underlying screen
+        win.clear()
+        self.stdscr.touchwin()
+        self.stdscr.refresh()
+        return chr(ch)
