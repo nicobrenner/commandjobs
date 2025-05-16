@@ -45,7 +45,7 @@ class ApplicationsDisplay:
             base_query += " WHERE a.status = 'Open'"
         else:
             base_query += " WHERE a.status <> 'Open'"
-        base_query += " ORDER BY a.created_at DESC"
+        base_query += " ORDER BY a.id DESC"
         cur.execute(base_query)
         self.applications = cur.fetchall()
         conn.close()
@@ -57,7 +57,7 @@ class ApplicationsDisplay:
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, note, created_at FROM application_notes WHERE application_id = ? ORDER BY created_at ASC",
+            "SELECT id, note, created_at FROM application_notes WHERE application_id = ? ORDER BY created_at DESC",
             (application_id,)
         )
         self.notes = cur.fetchall()
