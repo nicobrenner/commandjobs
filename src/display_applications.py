@@ -26,26 +26,40 @@ class ApplicationsDisplay:
 
     def fetch_applications(self):
         """
-        Load self.applications = [(application_id, job_id, company_name, applied_date, status), ...]
+        Load self.applications = [
+            (application_id, job_id, company_name, applied_date, status, last_activity), ...
+        ], ordered by last_activity DESC.
         """
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         cur = conn.cursor()
+
         base_query = """
             SELECT
                 a.id AS application_id,
                 a.job_id AS job_id,
                 json_extract(gi.answer, '$.company_name') AS company_name,
                 a.created_at AS applied_date,
-                a.status AS status
+                a.status AS status,
+                COALESCE(
+                    (
+                        SELECT MAX(created_at)
+                        FROM application_notes
+                        WHERE application_id = a.id
+                    ),
+                    a.created_at
+                ) AS last_activity
             FROM applications AS a
-            JOIN gpt_interactions AS gi ON gi.job_id = a.job_id
+            JOIN gpt_interactions AS gi
+            ON gi.job_id = a.job_id
         """
         if not self.show_finalized_only:
             base_query += " WHERE a.status = 'Open'"
         else:
             base_query += " WHERE a.status <> 'Open'"
-        base_query += " ORDER BY a.id DESC"
+
+        base_query += " ORDER BY last_activity DESC"
+
         cur.execute(base_query)
         self.applications = cur.fetchall()
         conn.close()
@@ -433,7 +447,7 @@ class ApplicationsDisplay:
             # Load data
             self.fetch_applications()
             # Left pane
-            for idx, (app_id, job_id, company, adate, status) in enumerate(self.applications):
+            for idx, (app_id, job_id, company, adate, status, last_activity)  in enumerate(self.applications):
                 y = base_y + idx
                 label = f"  {company} ({adate.split(' ')[0]}) [{status[0]}]  "
                 attr = curses.A_REVERSE if self.active_pane == 'applications' and idx == self.cursor else curses.A_NORMAL
