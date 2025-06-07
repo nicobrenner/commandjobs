@@ -71,13 +71,16 @@ class MenuApp:
         applied_count = self.db_manager.fetch_applied_listings_count()
         applications_menu = f"📋 Applications ({applied_count})"
 
-        self.menu_items = [resume_menu,
-                           "🕸  Scrape \"Ask HN: Who's hiring?\"",
-                           "🕸  Scrape \"Work at a Startup jobs\"",
-                            "🕸  Scrape \"Workday\"",
-                           db_menu_item, find_best_matches_menu,
-                           ai_recommendations_menu,
-                           applications_menu]
+        self.menu_items = [
+            applications_menu,                   # 1  <-- moved up
+            ai_recommendations_menu,             # 2  <-- moved up
+            find_best_matches_menu,              # 3  <-- moved up
+            "🕸  Scrape \"Ask HN: Who's hiring?\"",   # 4
+            "🕸  Scrape \"Work at a Startup jobs\"",  # 5
+            "🕸  Scrape \"Workday\"",                  # 6
+            resume_menu,                         # 0
+            db_menu_item                         # 7  <-- moved down
+        ]
         self.current_row = 0
         self.display_splash_screen()
         self.run()
@@ -239,11 +242,22 @@ class MenuApp:
         applications_menu = f"📋 Applications ({applied_count})"
 
         # Update the relevant menu items
-        self.menu_items[0] = resume_menu
-        self.menu_items[4] = db_menu_item
-        self.menu_items[5] = find_best_matches_menu
-        self.menu_items[6] = ai_recommendations_menu
-        self.menu_items[7] = applications_menu
+        # -----------------------------------------------
+        # refresh the *same* slots used in self.menu_items
+        # 0 📋 Applications
+        # 1 ✅ Recommended
+        # 2 🧠 Find best matches
+        # 3 🕸 Scrape HN            ← leave untouched!
+        # 4 🕸 Scrape W@S
+        # 5 🕸 Scrape Workday
+        # 6 📄 Resume               ← update this one
+        # 7 💾 Navigate DB
+        # -----------------------------------------------
+        self.menu_items[0] = applications_menu
+        self.menu_items[1] = ai_recommendations_menu
+        self.menu_items[2] = find_best_matches_menu
+        self.menu_items[6] = resume_menu          # ← was 3
+        self.menu_items[7] = db_menu_item
 
         # Redraw the menu to reflect the updated items
         self.draw_menu()
@@ -254,23 +268,32 @@ class MenuApp:
     # = "Create or replace base resume"
     def execute_menu_action(self):
         exit_message = ''
-        if self.current_row == 0:  # Create or replace base resume
-            exit_message = self.manage_resume(self.stdscr)
-        elif self.current_row == 1:  # Scrape "Ask HN: Who's hiring?"
-            self.start_scraping_with_status_updates()
-        elif self.current_row == 2:  # Scrape Work at a Startup jobs
-            self.start_scraping_WaaS_with_status_updates()
-        elif self.current_row == 3:  # Scrape Workday
-            self.start_scraping_workday_with_status_updates()
-        elif self.current_row == 4:  # Navigate jobs in local db
-            draw_table(self.stdscr, self.db_path)
-        elif self.current_row == 5:  # "Process job listings with GPT" option
-            exit_message = asyncio.run(self.process_with_gpt())
-        elif self.current_row == 6:  # Index of the new menu option
-            self.table_display.draw_table()
-        elif self.current_row == 7:           # adjust index if needed
+        if   self.current_row == 0:      # 📋 Applications
             self.app_display = ApplicationsDisplay(self.stdscr, self.db_path)
             self.app_display.draw_board()
+
+        elif self.current_row == 1:      # ✅ Recommended listings
+            self.table_display.draw_table()
+
+        elif self.current_row == 2:      # 🧠 Find best matches
+            exit_message = asyncio.run(self.process_with_gpt())
+
+        elif self.current_row == 3:      # 🕸 Scrape “Ask HN”
+            self.start_scraping_with_status_updates()
+
+        elif self.current_row == 4:      # 🕸 Scrape “Work at a Startup”
+            self.start_scraping_WaaS_with_status_updates()
+
+        elif self.current_row == 5:      # 🕸 Scrape “Workday”
+            self.start_scraping_workday_with_status_updates()
+
+        elif self.current_row == 6:      # 📄 Resume
+            exit_message = self.manage_resume(self.stdscr)
+
+        elif self.current_row == 7:      # 💾 Navigate DB
+            draw_table(self.stdscr, self.db_path)
+
+        # redraw status / menu after the action
         self.stdscr.clear()
         self.update_menu_items()
         if exit_message != '':
