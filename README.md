@@ -191,7 +191,7 @@ Below is the step by step
     OPENAI_GPT_MODEL=gpt-4.1-turbo
 
     BASE_RESUME_PATH=base_resume.txt
-    HN_START_URL=https://news.ycombinator.com/item?id=44757794&p=1
+    HN_START_URL=https://news.ycombinator.com/item?id=45093192&p=1
 
     ...
     ```
