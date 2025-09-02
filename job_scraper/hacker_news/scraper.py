@@ -10,7 +10,7 @@ class HNScraper:
     def __init__(self, db_path='job_listings.db'):
         self.db_path = db_path
         # Define the base URL for Ask HN: Who's hiring
-        self.base_url = 'https://news.ycombinator.com/item?id=44757794&p=1'
+        self.base_url = 'https://news.ycombinator.com/item?id=45093192&p=1'
         self.new_entries_count = 0  # Initialize counter for new entries
 
     def save_to_database(self, original_text, original_html, source, external_id):
@@ -96,5 +96,5 @@ class HNScraper:
 if __name__ == "__main__":
     db_path = 'job_listings.db'
     scraper = HNScraper(db_path)
-    start_url = 'https://news.ycombinator.com/item?id=44757794&p=1'
+    start_url = 'https://news.ycombinator.com/item?id=45093192&p=1'
     scraper.scrape_hn_jobs(start_url)
