@@ -171,6 +171,7 @@ base_resume.txt
 job_listings.db
 job_listings.db-shm
 job_listings.db-wal
+*.csv
 
 # Ignore vscode configuration
 .vscode/
