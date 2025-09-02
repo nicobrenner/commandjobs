@@ -17,6 +17,7 @@ class MatchingTableDisplay:
         self.current_page = 1
         self.total_pages = 0
         self.rows_per_page = 3
+        self.search_term = ""
         logging.basicConfig(filename='matching_table_display.log', level=logging.DEBUG)
         
         self.good_match_filters = '''
@@ -42,16 +43,65 @@ class MatchingTableDisplay:
             return "Unknown"
         except (ValueError, TypeError):
             return "Unknown"
+    
+    def get_search_filters(self):
+        """Build additional WHERE conditions for search filtering."""
+        if not self.search_term:
+            return ""
+        
+        # Search in company name, summary, job description, and available positions
+        search_conditions = [
+            f"lower(json_extract(gi.answer, '$.company_name')) LIKE '%{self.search_term.lower()}%'",
+            f"lower(json_extract(gi.answer, '$.small_summary')) LIKE '%{self.search_term.lower()}%'", 
+            f"lower(jl.original_text) LIKE '%{self.search_term.lower()}%'",
+            f"lower(json_extract(gi.answer, '$.available_positions')) LIKE '%{self.search_term.lower()}%'"
+        ]
+        
+        return " AND (" + " OR ".join(search_conditions) + ")"
+    
+    def prompt_search(self):
+        """Prompt user for search term and update search filters."""
+        max_y, max_x = self.stdscr.getmaxyx()
+        
+        # Create input window
+        input_win = curses.newwin(3, max_x - 4, max_y - 5, 2)
+        input_win.box()
+        input_win.addstr(1, 2, f"Search (current: '{self.search_term}'): ")
+        input_win.refresh()
+        
+        # Enable echo and get input
+        curses.echo()
+        curses.curs_set(1)  # Show cursor
+        
+        # Get user input
+        try:
+            search_input = input_win.getstr(1, len(f"Search (current: '{self.search_term}'): ") + 2, 50).decode('utf-8')
+            self.search_term = search_input.strip()
+        except:
+            pass  # Handle any input errors
+        finally:
+            curses.noecho()
+            curses.curs_set(0)  # Hide cursor
+        
+        # Reset pagination
+        self.current_page = 1
+        self.highlighted_row_index = 0
+        
+        # Clear the input window
+        input_win.clear()
+        input_win.refresh()
+        del input_win
 
     def fetch_total_entries(self):
         try:
             conn = sqlite3.connect(self.db_path)
             cur = conn.cursor()
+            search_filters = self.get_search_filters()
             cur.execute(f"""
                 SELECT COUNT(gi.job_id)
                 FROM gpt_interactions gi
                 JOIN job_listings jl ON gi.job_id = jl.id
-                WHERE {self.good_match_filters}
+                WHERE {self.good_match_filters}{search_filters}
             """)
             total_entries = cur.fetchone()[0]
             conn.close()
@@ -84,7 +134,7 @@ class MatchingTableDisplay:
                 JOIN
                     job_listings jl ON gi.job_id = jl.id
                 WHERE
-                    {self.good_match_filters}
+                    {self.good_match_filters}{self.get_search_filters()}
                 ORDER BY jl.scraped_at DESC, jl.id DESC
                 LIMIT 1 OFFSET {offset}
             """
@@ -120,7 +170,7 @@ class MatchingTableDisplay:
                 JOIN
                     job_listings jl ON gi.job_id = jl.id
                 WHERE
-                    {self.good_match_filters}
+                    {self.good_match_filters}{self.get_search_filters()}
                 ORDER BY jl.scraped_at DESC, jl.id DESC
                 LIMIT {self.rows_per_page} OFFSET {offset}
             """
@@ -204,25 +254,25 @@ class MatchingTableDisplay:
             if idx == self.highlighted_row_index:
                 self.stdscr.attroff(curses.color_pair(3))
 
-        # Pagination info
-        pagination_info = f"Page {self.current_page} of {self.total_pages} ({self.total_entries} great matches for your resume 😁)"
-        self.stdscr.attron(curses.color_pair(5))
-        self.stdscr.addstr(max_y - 2, 0, pagination_info)
-        self.stdscr.attroff(curses.color_pair(5))
-        # self.stdscr.addstr(max_y - 1, 0, pagination_info.ljust(max_x))  # Clear to the end of line
+        # Pagination info (this section is duplicated below and can be removed)
+        # pagination_info = f"Page {self.current_page} of {self.total_pages} ({self.total_entries} great matches for your resume 😁)"
+        # self.stdscr.attron(curses.color_pair(5))
+        # self.stdscr.addstr(max_y - 2, 0, pagination_info)
+        # self.stdscr.attroff(curses.color_pair(5))
 
         # --- new controls hint bar ---
         # --- footer line: pagination + controls ---
         footer_y = max_y - 2
 
         # 1) Draw pagination (flush-left)
-        pagination = f"Page {self.current_page} of {self.total_pages} ({self.total_entries} great matches for your resume 😁)"
+        search_status = f" (filtered: '{self.search_term}')" if self.search_term else ""
+        pagination = f"Page {self.current_page} of {self.total_pages} ({self.total_entries} great matches{search_status} 😁)"
         self.stdscr.attron(curses.color_pair(5))
         self.stdscr.addstr(footer_y, 0, pagination.ljust(max_x))
         self.stdscr.attroff(curses.color_pair(5))
 
         # 2) Prepare controls text
-        controls_text = "[↑↓] Move  [←→ ] Page  [Enter] View  [d] Discard  [a] Apply  [q] Back to Menu"
+        controls_text = "[↑↓] Move  [←→ ] Page  [Enter] View  [d] Discard  [a] Apply  [s] Search  [c] Clear  [q] Back"
 
         # 3) Clear the next line so no overlap
         self.stdscr.move(footer_y + 1, 0)
@@ -271,6 +321,21 @@ class MatchingTableDisplay:
                     self.total_entries = self.fetch_total_entries()
                     self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
                     # self.highlighted_row_index = 0
+                    self.draw_page(self.current_page)
+            elif key == ord('s'):
+                # Search functionality
+                self.prompt_search()
+                self.total_entries = self.fetch_total_entries()
+                self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
+                self.draw_page(self.current_page)
+            elif key == ord('c'):
+                # Clear search
+                if self.search_term:
+                    self.search_term = ""
+                    self.current_page = 1
+                    self.highlighted_row_index = 0
+                    self.total_entries = self.fetch_total_entries()
+                    self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
                     self.draw_page(self.current_page)
             elif key == ord('q'):
                 break  # Exit the table view
