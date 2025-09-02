@@ -430,6 +430,12 @@ class ApplicationsDisplay:
         )
         conn.commit()
         conn.close()
+        # Refresh applications list and adjust cursor
+        self.fetch_applications()
+        if self.cursor >= len(self.applications) and len(self.applications) > 0:
+            self.cursor = len(self.applications) - 1
+        elif len(self.applications) == 0:
+            self.cursor = 0
 
     def draw_board(self):
         while True:
@@ -453,7 +459,7 @@ class ApplicationsDisplay:
                 attr = curses.A_REVERSE if self.active_pane == 'applications' and idx == self.cursor else curses.A_NORMAL
                 self.stdscr.addnstr(y, 0, label, left_w - 1, attr)
             # Middle pane (Notes)
-            if self.applications:
+            if self.applications and self.cursor < len(self.applications):
                 application_id, job_id, *_ = self.applications[self.cursor]
                 self.fetch_notes(application_id)
                 note_y = base_y
