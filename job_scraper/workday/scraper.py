@@ -35,11 +35,17 @@ class WorkdayScraper:
         return chrome_options
 
     def save_to_database(self, original_text, original_html, source, external_id):
+        from datetime import datetime
+        
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         c = conn.cursor()
-        c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
-                  (original_text, original_html, source, external_id))
+        
+        # Get current timestamp
+        scraped_at = datetime.now().isoformat()
+        
+        c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id, scraped_at) VALUES (?, ?, ?, ?, ?)",
+                  (original_text, original_html, source, external_id, scraped_at))
         conn.commit()
         conn.close()
         return c.rowcount > 0
