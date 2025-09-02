@@ -4,7 +4,7 @@ import curses
 import textwrap
 import logging
 import json
-from datetime import date
+from datetime import date, datetime
 from display_applications import ApplicationsDisplay
 
 locale.setlocale(locale.LC_ALL, '')
@@ -31,6 +31,17 @@ class MatchingTableDisplay:
     def log(self, message):
         """Log a message for debugging."""
         logging.debug(message)
+    
+    def format_scraped_date(self, scraped_at):
+        """Format scraped_at timestamp for display."""
+        try:
+            if scraped_at:
+                # Parse the ISO timestamp and format for display
+                dt = datetime.fromisoformat(scraped_at)
+                return dt.strftime("%Y-%m-%d")
+            return "Unknown"
+        except (ValueError, TypeError):
+            return "Unknown"
 
     def fetch_total_entries(self):
         try:
@@ -66,14 +77,15 @@ class MatchingTableDisplay:
                     json_extract(gi.answer, '$.hiring_in_us') AS hiring_in_us,
                     gi.job_id,
                     jl.original_text,
-                    jl.external_id
+                    jl.external_id,
+                    jl.scraped_at
                 FROM
                     gpt_interactions gi
                 JOIN
                     job_listings jl ON gi.job_id = jl.id
                 WHERE
                     {self.good_match_filters}
-                ORDER BY jl.id DESC
+                ORDER BY jl.scraped_at DESC, jl.id DESC
                 LIMIT 1 OFFSET {offset}
             """
             self.log(f"Executing query: {query}")  # Log the query
@@ -101,14 +113,15 @@ class MatchingTableDisplay:
                     json_extract(gi.answer, '$.remote_positions') AS remote_positions,
                     json_extract(gi.answer, '$.hiring_in_us') AS hiring_in_us,
                     gi.job_id,
-                    jl.original_text
+                    jl.original_text,
+                    jl.scraped_at
                 FROM
                     gpt_interactions gi
                 JOIN
                     job_listings jl ON gi.job_id = jl.id
                 WHERE
                     {self.good_match_filters}
-                ORDER BY jl.id DESC
+                ORDER BY jl.scraped_at DESC, jl.id DESC
                 LIMIT {self.rows_per_page} OFFSET {offset}
             """
             self.log(f"Executing query: {query}")  # Log the query
@@ -163,6 +176,13 @@ class MatchingTableDisplay:
                     except (json.JSONDecodeError, TypeError):
                         # JSON was bad, or field was None
                         field = "Invalid data"
+                
+                # For the 'Company' column, add scraped date underneath
+                if key == "Company":
+                    # listing has scraped_at as the last field (index 10 in fetch_data, index 11 in fetch_job)
+                    scraped_at = listing[10] if len(listing) > 10 else None
+                    formatted_date = self.format_scraped_date(scraped_at)
+                    field = f"{field}\n({formatted_date})"
                 
                 # This part takes a field content and wraps it in width
                 # then it loops through it line by line, and 

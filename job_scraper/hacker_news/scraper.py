@@ -10,17 +10,23 @@ class HNScraper:
     def __init__(self, db_path='job_listings.db'):
         self.db_path = db_path
         # Define the base URL for Ask HN: Who's hiring
-        self.base_url = 'https://news.ycombinator.com/item?id=44434576&p=1'
+        self.base_url = 'https://news.ycombinator.com/item?id=44757794&p=1'
         self.new_entries_count = 0  # Initialize counter for new entries
 
     def save_to_database(self, original_text, original_html, source, external_id):
         """Save a job listing to the SQLite database."""
+        from datetime import datetime
+        
         conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA journal_mode=WAL;")
         c = conn.cursor()
+        
+        # Get current timestamp
+        scraped_at = datetime.now().isoformat()
+        
         # Use INSERT OR IGNORE to skip existing records with the same external_id
-        c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id) VALUES (?, ?, ?, ?)",
-                  (original_text, original_html, source, external_id))
+        c.execute("INSERT OR IGNORE INTO job_listings (original_text, original_html, source, external_id, scraped_at) VALUES (?, ?, ?, ?, ?)",
+                  (original_text, original_html, source, external_id, scraped_at))
         conn.commit()
         conn.close()
         return c.rowcount > 0 # True if the listing was inserted
@@ -90,5 +96,5 @@ class HNScraper:
 if __name__ == "__main__":
     db_path = 'job_listings.db'
     scraper = HNScraper(db_path)
-    start_url = 'https://news.ycombinator.com/item?id=44434576&p=1'
+    start_url = 'https://news.ycombinator.com/item?id=44757794&p=1'
     scraper.scrape_hn_jobs(start_url)

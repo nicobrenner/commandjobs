@@ -20,10 +20,13 @@ services:
     environment:
       - MENU_APP=src/menu.py
       - PYTHONPATH=/commandjobs
+      - TERM=xterm-256color
+    env_file:
+      - ../.env
 
     # Mount entire project into docker container under /repo
     volumes:
-      - ../:/commandjobs
+      - ..:/commandjobs
 
     # Use host network mode (may require changes depending on Docker environment)
     network_mode: host
