@@ -338,6 +338,8 @@ class MatchingTableDisplay:
                     self.total_pages = (self.total_entries + self.rows_per_page - 1) // self.rows_per_page
                     self.draw_page(self.current_page)
             elif key == ord('q'):
+                # Clear search when exiting to avoid confusing menu display
+                self.search_term = ""
                 break  # Exit the table view
             elif key == ord('a'):
                 # Apply to current job
@@ -347,6 +349,8 @@ class MatchingTableDisplay:
                     # Show post-apply dialog
                     choice = self.show_post_apply_dialog()
                     if choice == 'a':
+                        # Clear search when navigating to applications
+                        self.search_term = ""
                         # Go to applications view
                         apps = ApplicationsDisplay(self.stdscr, self.db_path)
                         apps.draw_board()
@@ -500,6 +504,8 @@ class MatchingTableDisplay:
                     
                     ch = self.stdscr.getch()
                     if ch == ord('q'):
+                        # Clear search when exiting detail view to avoid confusing menu display
+                        self.search_term = ""
                         return  # Quit the detail view
                     elif ch == curses.KEY_LEFT:
                         job_index = (job_index - 1) % self.total_entries  # Move to the previous job or wrap around
@@ -514,6 +520,8 @@ class MatchingTableDisplay:
                         # Show post-apply dialog
                         choice = self.show_post_apply_dialog()
                         if choice == 'a':
+                            # Clear search when navigating to applications
+                            self.search_term = ""
                             # Go to applications view
                             apps = ApplicationsDisplay(self.stdscr, self.db_path)
                             apps.draw_board()
