@@ -6,6 +6,7 @@ from display_table import draw_table
 from database_manager import DatabaseManager
 from display_matching_table import MatchingTableDisplay
 from display_applications import ApplicationsDisplay
+from display_all_jobs import AllJobsDisplay
 from gpt_processor import GPTProcessor
 
 import asyncio
@@ -48,6 +49,7 @@ class MenuApp:
         self.gpt_processor = GPTProcessor(self.db_manager, os.getenv('OPENAI_API_KEY'))
         self.resume_path = os.getenv('BASE_RESUME_PATH')
         self.table_display = MatchingTableDisplay(self.stdscr, self.db_path)
+        self.all_jobs_display = AllJobsDisplay(self.stdscr, self.db_path)
         self.total_ai_job_recommendations = self.table_display.fetch_total_entries()
         self.update_processed_listings_count()
         self.total_listings = self.get_total_listings()
@@ -291,7 +293,7 @@ class MenuApp:
             exit_message = self.manage_resume(self.stdscr)
 
         elif self.current_row == 7:      # 💾 Navigate DB
-            draw_table(self.stdscr, self.db_path)
+            self.all_jobs_display.draw_table()
 
         # redraw status / menu after the action
         self.stdscr.clear()

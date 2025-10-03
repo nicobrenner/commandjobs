@@ -191,11 +191,11 @@ Below is the step by step
     OPENAI_GPT_MODEL=gpt-4.1-turbo
 
     BASE_RESUME_PATH=base_resume.txt
-    HN_START_URL=https://news.ycombinator.com/item?id=45093192&p=1
+    HN_START_URL=https://news.ycombinator.com/item?id=45438503&p=1
 
     ...
     ```
-    Note: the above HN_START_URL is for May 2025
+    Note: the above HN_START_URL is for October 2025
 
 
     ### Obtaining an OpenAI API Key
